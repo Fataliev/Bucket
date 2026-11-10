@@ -1,0 +1,16 @@
+core_cm3.h:1499:26:__NVIC_GetPriorityGrouping	1
+core_cm3.h:1511:22:__NVIC_EnableIRQ	2
+core_cm3.h:1639:22:__NVIC_SetPriority	2
+core_cm3.h:1686:26:NVIC_EncodePriority	2
+stm32f1xx_ll_bus.h:447:22:LL_APB1_GRP1_EnableClock	1
+stm32f1xx_ll_bus.h:763:22:LL_APB2_GRP1_EnableClock	1
+stm32f1xx_ll_tim.h:1254:22:LL_TIM_DisableARRPreload	1
+stm32f1xx_ll_tim.h:1853:22:LL_TIM_OC_DisableFast	7
+stm32f1xx_ll_tim.h:1897:22:LL_TIM_OC_EnablePreload	7
+stm32f1xx_ll_tim.h:2581:22:LL_TIM_SetClockSource	1
+stm32f1xx_ll_tim.h:2627:22:LL_TIM_SetTriggerOutput	1
+stm32f1xx_ll_tim.h:2693:22:LL_TIM_DisableMasterSlaveMode	1
+stm32f1xx_ll_gpio.h:1102:22:LL_GPIO_AF_RemapPartial1_TIM2	1
+tim.c:28:6:MX_TIM2_Init	1
+tim.c:78:6:MX_TIM3_Init	1
+tim.c:112:6:MX_TIM4_Init	1

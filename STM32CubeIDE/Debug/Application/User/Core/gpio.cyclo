@@ -1,0 +1,10 @@
+core_cm3.h:1499:26:__NVIC_GetPriorityGrouping	1
+core_cm3.h:1511:22:__NVIC_EnableIRQ	2
+core_cm3.h:1639:22:__NVIC_SetPriority	2
+core_cm3.h:1686:26:NVIC_EncodePriority	2
+stm32f1xx_ll_bus.h:763:22:LL_APB2_GRP1_EnableClock	1
+stm32f1xx_ll_gpio.h:342:22:LL_GPIO_SetPinMode	1
+stm32f1xx_ll_gpio.h:804:22:LL_GPIO_SetOutputPin	1
+stm32f1xx_ll_gpio.h:833:22:LL_GPIO_ResetOutputPin	1
+stm32f1xx_ll_gpio.h:2268:22:LL_GPIO_AF_SetEXTISource	1
+gpio.c:42:6:MX_GPIO_Init	1

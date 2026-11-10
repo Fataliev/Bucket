@@ -1,0 +1,507 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2100" height="3050" viewBox="0 0 2100 3050">
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#64748b"/>
+    </marker>
+    <style>
+      .bg { fill: #ffffff; }
+      .title { font: bold 26px 'Segoe UI', Arial, sans-serif; fill: #0f172a; }
+      .subtitle { font: 16px 'Segoe UI', Arial, sans-serif; fill: #475569; }
+      .block-title { font: bold 18px 'Segoe UI', Arial, sans-serif; fill: #1e293b; }
+      
+      .track-label { font: bold 14px 'Segoe UI', Arial, sans-serif; fill: #334155; text-anchor: end; }
+      .track-sub { font: 12px 'Segoe UI', Arial, sans-serif; fill: #64748b; text-anchor: end; }
+      
+      .axis-text { font: 12px 'Segoe UI', Arial, sans-serif; fill: #64748b; text-anchor: middle; }
+      .time-label { font: bold 13px 'Segoe UI', Arial, sans-serif; fill: #dc2626; text-anchor: middle; }
+      
+      .line-axis { stroke: #94a3b8; stroke-width: 1.5; }
+      .line-critical { stroke: #ef4444; stroke-width: 1.5; stroke-dasharray: 6 4; }
+      .line-lifeline { stroke: #e2e8f0; stroke-width: 1; stroke-dasharray: 3 3; }
+      
+      /* Colors for SPI */
+      .sig-cs { fill: none; stroke: #b45309; stroke-width: 2.5; }
+      .sig-mosi { fill: none; stroke: #2563eb; stroke-width: 2; }
+      .sig-miso { fill: none; stroke: #059669; stroke-width: 2.5; }
+      
+      /* Colors for other buses */
+      .sig-1wire { fill: none; stroke: #be123c; stroke-width: 2; }
+      
+      /* Control signals */
+      .sig-sw { fill: none; stroke: #db2777; stroke-width: 2.5; }
+      .sig-psw1 { fill: none; stroke: #8b5cf6; stroke-width: 2.5; }
+      .sig-psw2 { fill: none; stroke: #0ea5e9; stroke-width: 2.5; }
+      
+      .box-cmd { fill: #eff6ff; stroke: #3b82f6; stroke-width: 1.5; rx: 4; }
+      .box-resp { fill: #ecfdf5; stroke: #10b981; stroke-width: 1.5; rx: 4; }
+      .box-1wire { fill: #fff1f2; stroke: #f43f5e; stroke-width: 1.5; rx: 4; }
+      .box-1wire-read { fill: #fce7f3; stroke: #db2777; stroke-width: 1.5; rx: 4; }
+      .box-i2c { fill: #f5f3ff; stroke: #8b5cf6; stroke-width: 1.5; rx: 4; }
+      
+      .text-box { font: bold 10px 'Consolas', monospace; fill: #1e3a8a; text-anchor: middle; }
+      .text-resp { font: bold 10px 'Consolas', monospace; fill: #064e3b; text-anchor: middle; }
+      .text-1wire { font: bold 9px 'Consolas', monospace; fill: #881337; text-anchor: middle; }
+      .text-1wire-read { font: bold 9px 'Consolas', monospace; fill: #831843; text-anchor: middle; }
+      .text-i2c { font: bold 10px 'Consolas', monospace; fill: #4c1d95; text-anchor: middle; }
+      
+      .note { font: 14px 'Segoe UI', Arial, sans-serif; fill: #1e293b; }
+      .legend { font: 13px 'Segoe UI', Arial, sans-serif; fill: #475569; }
+      .highlight { fill: #1e3a8a; font-weight: bold; }
+      .red-text { fill: #b91c1c; font-weight: bold; }
+      .green-text { fill: #15803d; font-weight: bold; }
+      
+      .step-bg-d22 { fill: #eff6ff; stroke: #93c5fd; stroke-width: 1; }
+      .step-bg-d23 { fill: #fdf2f8; stroke: #fbcfe8; stroke-width: 1; }
+      .step-bg-sleep { fill: #f1f5f9; stroke: #cbd5e1; stroke-width: 1; }
+      .step-text { font: bold 12px 'Segoe UI', Arial, sans-serif; fill: #1e293b; text-anchor: middle; }
+      
+      .desc-text { font: 11px 'Segoe UI', Arial, sans-serif; fill: #475569; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <rect width="100%" height="100%" class="bg"/>
+  
+  <!-- Заголовок -->
+  <text x="40" y="50" class="title">Архитектура и временная диаграмма работы измерительного модуля Bucket (ред. 9)</text>
+  <text x="40" y="80" class="subtitle">Ред. 9: SPI = 1 МГц. Добавлен settling 5 мс после ADG888/PSW перед стартом конверсии. 1-Wire: Broadcast Convert + Read via DMA.</text>
+
+  <!-- ======================== БЛОК 1: ИНИЦИАЛИЗАЦИЯ ======================== -->
+  <rect x="30" y="110" width="2040" height="620" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" rx="8"/>
+  <text x="50" y="145" class="block-title">Блок 1: Инициализация при старте (Mixed-Bus Sequential Init)</text>
+  <text x="50" y="170" class="legend">Настройка шин, проверка связи, калибровка. Каждая SPI-транзакция стробируется сигналом CS.</text>
+
+  <!-- Ось времени Инициализации -->
+  <line x1="250" y1="210" x2="2040" y2="210" class="line-axis" marker-end="url(#arrow)"/>
+  <g class="axis-text">
+    <text x="300" y="200">0 мс</text>
+    <text x="500" y="200">~10 мс</text>
+    <text x="800" y="200">~1 с</text>
+    <text x="1100" y="200">~2 с</text>
+    <text x="1400" y="200">~3 с</text>
+    <text x="1700" y="200">~4 с</text>
+    <text x="2000" y="200">~5 с</text>
+  </g>
+
+  <!-- Треки инициализации -->
+  <text x="230" y="250" class="track-label">CS_ADC_1 (D22)</text>
+  <path d="M250,245 L270,245 L270,235 L320,235 L320,245 L350,245 L350,235 L400,235 L400,245 L430,245 L430,235 L480,235 L480,245 L510,245 L510,235 L580,235 L580,245 L610,245 L610,235 L700,235 L700,245 L2040,245" class="sig-cs"/>
+  <text x="285" y="230" class="desc-text">Сброс</text>
+  <text x="365" y="230" class="desc-text">ID</text>
+  <text x="455" y="230" class="desc-text">Config</text>
+  <text x="655" y="230" class="desc-text">Calib (Zero)</text>
+
+  <text x="230" y="310" class="track-label">CS_ADC_2 (D23)</text>
+  <path d="M250,305 L740,305 L740,295 L790,295 L790,305 L820,305 L820,295 L870,295 L870,305 L900,305 L900,295 L950,295 L950,305 L980,305 L980,295 L1050,295 L1050,305 L1080,305 L1080,295 L1170,295 L1170,305 L2040,305" class="sig-cs"/>
+  <text x="775" y="290" class="desc-text">Сброс</text>
+  <text x="855" y="290" class="desc-text">ID</text>
+  <text x="945" y="290" class="desc-text">Config</text>
+  <text x="1145" y="290" class="desc-text">Calib (Zero)</text>
+
+  <text x="230" y="370" class="track-label">CS_FLASH (D17)</text>
+  <path d="M250,365 L1200,365 L1200,355 L1250,355 L1250,365 L2040,365" class="sig-cs"/>
+  <text x="1225" y="350" class="desc-text">Read ID (0x9F)</text>
+
+  <!-- I2C Track -->
+  <text x="230" y="430" class="track-label">I2C (Все устройства)</text>
+  <line x1="250" y1="430" x2="2040" y2="430" class="line-lifeline"/>
+  <rect x="1250" y="420" width="40" height="20" class="box-i2c"/><text x="1270" y="434" class="text-i2c">0xA0</text>
+  <text x="1270" y="412" class="desc-text">EEPROM</text>
+  
+  <rect x="1350" y="420" width="40" height="20" class="box-i2c"/><text x="1370" y="434" class="text-i2c">0xD0</text>
+  <text x="1370" y="412" class="desc-text">RTC</text>
+
+  <rect x="1450" y="420" width="40" height="20" class="box-i2c"/><text x="1470" y="434" class="text-i2c">0xD4</text>
+  <text x="1470" y="412" class="desc-text">LTC4151</text>
+
+  <rect x="1550" y="420" width="40" height="20" class="box-i2c"/><text x="1570" y="434" class="text-i2c">0x32</text>
+  <text x="1570" y="412" class="desc-text">Accel</text>
+
+  <rect x="1650" y="420" width="40" height="20" class="box-i2c"/><text x="1670" y="434" class="text-i2c">0x3C</text>
+  <text x="1670" y="412" class="desc-text">Mag</text>
+  <text x="1730" y="434" class="legend">Опрос и инициализация всех I2C узлов</text>
+
+  <!-- 1-Wire Init Track -->
+  <text x="230" y="490" class="track-label">1-Wire (PA2)</text>
+  <line x1="250" y1="490" x2="2040" y2="490" class="line-lifeline"/>
+  <rect x="1800" y="480" width="100" height="20" class="box-1wire"/><text x="1850" y="494" class="text-1wire">Reset / Search</text>
+  <text x="1910" y="490" class="legend">Поиск DS18B20</text>
+  <text x="1905" y="505" class="legend">(считать ID всех 3 датчиков)</text>
+
+  <!-- MOSI / MISO инициализация -->
+  <text x="230" y="560" class="track-label">MOSI (DIN)</text>
+  <line x1="250" y1="560" x2="2040" y2="560" class="line-lifeline"/>
+  <!-- D22 -->
+  <rect x="275" y="550" width="40" height="20" class="box-cmd"/><text x="295" y="565" class="text-box">0xFF</text>
+  <text x="295" y="545" class="desc-text">x4</text>
+  <rect x="355" y="550" width="40" height="20" class="box-cmd"/><text x="375" y="565" class="text-box">0x40</text>
+  <rect x="435" y="550" width="40" height="20" class="box-cmd"/><text x="455" y="565" class="text-box">0x10</text>
+  <rect x="485" y="550" width="60" height="20" class="box-cmd"/><text x="515" y="565" class="text-box">0x0010</text>
+  <rect x="615" y="550" width="60" height="20" class="box-cmd"/><text x="645" y="565" class="text-box">0x900F</text>
+  <text x="645" y="545" class="desc-text">Zero + PSW_ON</text>
+  <text x="645" y="535" class="desc-text red-text" font-size="10">(settle 5ms)</text>
+  <text x="695" y="545" class="red-text">⚠</text>
+  <!-- D23 -->
+  <rect x="765" y="550" width="40" height="20" class="box-cmd"/><text x="785" y="565" class="text-box">0xFF</text>
+  <rect x="845" y="550" width="40" height="20" class="box-cmd"/><text x="865" y="565" class="text-box">0x40</text>
+  <rect x="925" y="550" width="40" height="20" class="box-cmd"/><text x="945" y="565" class="text-box">0x10</text>
+  <rect x="975" y="550" width="60" height="20" class="box-cmd"/><text x="1005" y="565" class="text-box">0x0010</text>
+  <rect x="1105" y="550" width="60" height="20" class="box-cmd"/><text x="1135" y="565" class="text-box">0x900F</text>
+  <text x="1135" y="545" class="desc-text">Zero + PSW_ON</text>
+  <text x="1135" y="535" class="desc-text red-text" font-size="10">(settle 5ms)</text>
+  <text x="1185" y="545" class="red-text">⚠</text>
+
+  <text x="230" y="620" class="track-label">MISO (DOUT)</text>
+  <line x1="250" y1="620" x2="2040" y2="620" class="line-lifeline"/>
+  <rect x="405" y="610" width="50" height="20" class="box-resp"/><text x="430" y="625" class="text-resp">0xX9</text>
+  <text x="430" y="605" class="desc-text">ID OK</text>
+  <rect x="895" y="610" width="50" height="20" class="box-resp"/><text x="920" y="625" class="text-resp">0xX9</text>
+  <text x="920" y="605" class="desc-text">ID OK</text>
+  <text x="700" y="640" class="desc-text">RDY HIGH → LOW (калибровка завершена)</text>
+  <text x="730" y="660" class="desc-text">После RDY LOW: Read Offset (0x46, 24-bit) → Read FS (0x47, 24-bit) → EEPROM</text>
+
+  <text x="50" y="690" class="note">• <tspan class="highlight">SPI:</tspan> Сброс, проверка ID. Калибровка: запись Config (выбор канала), затем Mode <tspan class="red-text">0x900F</tspan> (Zero-Scale + <tspan class="green-text">PSW ON</tspan>). Full-Scale Cal не выполняется (не поддерживается при Gain=128).</text>
+  <text x="50" y="715" class="note">• <tspan class="highlight">I2C:</tspan> Последовательный опрос всех узлов: EEPROM (чтение калибровок), RTC, датчик тока LTC4151, акселерометр/магнитометр LSM303.</text>
+
+  <!-- ======================== БЛОК 2: РАБОЧИЙ ЦИКЛ ======================== -->
+  <rect x="30" y="750" width="2040" height="1400" fill="#ffffff" stroke="#cbd5e1" stroke-width="2" rx="8"/>
+  <text x="50" y="785" class="block-title">Блок 2: Измерительный цикл (Super-cycle 6 секунд, только активная фаза)</text>
+  <text x="50" y="810" class="legend">7 шагов по 480 мс. PSW эксклюзивен. Ось времени растянута (0–3370 мс), фаза сна показана схематично с разрывом.</text>
+
+  <!-- Ось времени Цикла -->
+  <line x1="250" y1="850" x2="1680" y2="850" class="line-axis" />
+  <line x1="1820" y1="850" x2="2040" y2="850" class="line-axis" marker-end="url(#arrow)"/>
+  
+  <!-- Разрыв оси -->
+  <path d="M 1690 840 L 1710 860 M 1700 840 L 1720 860" stroke="#64748b" stroke-width="2"/>
+  <path d="M 1790 840 L 1810 860 M 1800 840 L 1820 860" stroke="#64748b" stroke-width="2"/>
+  <text x="1755" y="845" class="axis-text">~Sleep~</text>
+
+  <g class="axis-text">
+    <text x="250" y="840">0 мс</text>
+    <text x="450" y="840">480 мс</text>
+    <text x="650" y="840">960 мс</text>
+    <text x="850" y="840">1440 мс</text>
+    <text x="1050" y="840">1920 мс</text>
+    <text x="1250" y="840">2410 мс</text>
+    <text x="1450" y="840">2890 мс</text>
+    <text x="1650" y="840">3370 мс</text>
+    <text x="1950" y="840">6000 мс</text>
+  </g>
+
+  <!-- Критические линии -->
+  <line x1="1050" y1="850" x2="1050" y2="1970" class="line-critical"/>
+  <text x="1050" y="870" class="time-label">RDY M4 (Переключение)</text>
+  
+  <line x1="1650" y1="850" x2="1650" y2="1970" class="line-critical"/>
+  <text x="1650" y="870" class="time-label">RDY M7 (~3375 мс)</text>
+
+  <line x1="1850" y1="850" x2="1850" y2="1970" class="line-critical"/>
+  <text x="1850" y="870" class="time-label">PSW ON (Пробуждение)</text>
+
+  <!-- Шаги цикла -->
+  <g>
+    <rect x="250" y="890" width="200" height="30" class="step-bg-d22"/>
+    <text x="350" y="910" class="step-text">M1: D22 Temp</text>
+    <rect x="450" y="890" width="200" height="30" class="step-bg-d22"/>
+    <text x="550" y="910" class="step-text">M2: D22 B8</text>
+    <rect x="650" y="890" width="200" height="30" class="step-bg-d22"/>
+    <text x="750" y="910" class="step-text">M3: D22 B6</text>
+    <rect x="850" y="890" width="200" height="30" class="step-bg-d22"/>
+    <text x="950" y="910" class="step-text">M4: D22 AIN1</text>
+
+    <rect x="1050" y="890" width="200" height="30" class="step-bg-d23"/>
+    <text x="1150" y="910" class="step-text">M5: D23 AIN1</text>
+    
+    <rect x="1250" y="890" width="200" height="30" class="step-bg-d23"/>
+    <text x="1350" y="910" class="step-text">M6: D23 B7</text>
+    
+    <rect x="1450" y="890" width="200" height="30" class="step-bg-d23"/>
+    <text x="1550" y="910" class="step-text">M7: D23 Temp</text>
+
+    <rect x="1680" y="890" width="140" height="30" class="step-bg-sleep"/>
+    <text x="1750" y="910" class="step-text">IDLE</text>
+
+    <rect x="1850" y="890" width="150" height="30" class="step-bg-d22"/>
+    <text x="1925" y="910" class="step-text">M1: D22 Temp</text>
+  </g>
+
+  <!-- Треки Цикла -->
+  
+  <!-- 1. CS_ADC_1 (D22) -->
+  <text x="230" y="960" class="track-label">CS_ADC_1 (D22)</text>
+  <path d="M250,955 L250,945 L270,945 L270,955 L430,955 L430,945 L450,945 L450,955 L630,955 L630,945 L650,945 L650,955 L830,955 L830,945 L850,945 L850,955 L1030,955 L1030,945 L1050,945 L1050,955 L2040,955" class="sig-cs"/>
+  
+  <text x="260" y="935" class="desc-text">Start</text>
+  <text x="437" y="935" class="desc-text">Read</text>
+  <text x="460" y="935" class="desc-text">Start</text>
+  <text x="637" y="935" class="desc-text">Read</text>
+  <text x="660" y="935" class="desc-text">Start</text>
+  <text x="837" y="935" class="desc-text">Read</text>
+  <text x="860" y="935" class="desc-text">Start</text>
+  <text x="1037" y="935" class="desc-text">Read</text>
+
+  <!-- 2. CS_ADC_2 (D23) -->
+  <text x="230" y="1010" class="track-label">CS_ADC_2 (D23)</text>
+  <path d="M250,1005 L1050,1005 L1050,995 L1070,995 L1070,1005 L1230,1005 L1230,995 L1250,995 L1250,1005 L1430,1005 L1430,995 L1450,995 L1450,1005 L1630,1005 L1630,995 L1650,995 L1650,1005 L2040,1005" class="sig-cs"/>
+
+  <text x="1060" y="985" class="desc-text">Start</text>
+  <text x="1237" y="985" class="desc-text">Read</text>
+  <text x="1260" y="985" class="desc-text">Start</text>
+  <text x="1437" y="985" class="desc-text">Read</text>
+  <text x="1460" y="985" class="desc-text">Start</text>
+  <text x="1637" y="985" class="desc-text">Read</text>
+
+  <!-- 3. MOSI (DIN) -->
+  <text x="230" y="1080" class="track-label">MOSI (DIN)</text>
+  <line x1="250" y1="1080" x2="2040" y2="1080" class="line-lifeline"/>
+  
+  <!-- M1 -->
+  <rect x="250" y="1070" width="20" height="20" class="box-cmd"/><text x="260" y="1085" class="text-box">0x08</text>
+  <rect x="275" y="1070" width="45" height="20" class="box-cmd"/><text x="297" y="1085" class="text-box">0x3000</text>
+  <text x="297" y="1055" class="desc-text" font-size="10">PSW_ON</text>
+  
+  <rect x="330" y="1070" width="20" height="20" class="box-cmd"/><text x="340" y="1085" class="text-box">0x08</text>
+  <rect x="355" y="1070" width="45" height="20" class="box-cmd"/><text x="377" y="1085" class="text-box">0x300A</text>
+  <text x="377" y="1055" class="desc-text red-text" font-size="10">Start (settle 5ms)</text>
+
+  <rect x="430" y="1070" width="20" height="20" class="box-cmd"/><text x="440" y="1085" class="text-box">0x58</text>
+  <text x="440" y="1050" class="desc-text">Read Data</text>
+
+  <!-- M2 -->
+  <rect x="450" y="1070" width="20" height="20" class="box-cmd"/><text x="460" y="1085" class="text-box">0x08</text>
+  <rect x="475" y="1070" width="45" height="20" class="box-cmd"/><text x="497" y="1085" class="text-box">0x300A</text>
+  <text x="485" y="1065" class="desc-text">PSW_ON+Single</text>
+  <rect x="630" y="1070" width="20" height="20" class="box-cmd"/><text x="640" y="1085" class="text-box">0x58</text>
+
+  <!-- M3 -->
+  <rect x="650" y="1070" width="20" height="20" class="box-cmd"/><text x="660" y="1085" class="text-box">0x08</text>
+  <rect x="675" y="1070" width="45" height="20" class="box-cmd"/><text x="697" y="1085" class="text-box">0x300A</text>
+  <text x="685" y="1065" class="desc-text">PSW_ON+Single</text>
+  <rect x="830" y="1070" width="20" height="20" class="box-cmd"/><text x="840" y="1085" class="text-box">0x58</text>
+
+  <!-- M4 -->
+  <rect x="850" y="1070" width="20" height="20" class="box-cmd"/><text x="860" y="1085" class="text-box">0x08</text>
+  <rect x="875" y="1070" width="45" height="20" class="box-cmd"/><text x="897" y="1085" class="text-box">0x300A</text>
+  <text x="885" y="1065" class="desc-text">PSW_ON+Single</text>
+  <rect x="1030" y="1070" width="20" height="20" class="box-cmd"/><text x="1040" y="1085" class="text-box">0x58</text>
+
+  <!-- D22 OFF -->
+  <rect x="1050" y="1070" width="20" height="20" class="box-cmd"/><text x="1060" y="1085" class="text-box">0x08</text>
+  <rect x="1075" y="1070" width="45" height="20" class="box-cmd"/><text x="1097" y="1085" class="text-box">0x2000</text>
+  <text x="1085" y="1065" class="desc-text">Idle+PSW_OFF</text>
+
+  <!-- M5 -->
+  <rect x="1110" y="1070" width="20" height="20" class="box-cmd"/><text x="1120" y="1085" class="text-box">0x08</text>
+  <rect x="1135" y="1070" width="45" height="20" class="box-cmd"/><text x="1157" y="1085" class="text-box">0x3000</text>
+  <text x="1157" y="1055" class="desc-text" font-size="10">PSW_ON</text>
+  
+  <rect x="1190" y="1070" width="20" height="20" class="box-cmd"/><text x="1200" y="1085" class="text-box">0x08</text>
+  <rect x="1215" y="1070" width="45" height="20" class="box-cmd"/><text x="1237" y="1085" class="text-box">0x300A</text>
+  <text x="1237" y="1055" class="desc-text red-text" font-size="10">Start (settle 5ms)</text>
+
+  <rect x="1280" y="1070" width="20" height="20" class="box-cmd"/><text x="1290" y="1085" class="text-box">0x58</text>
+
+  <!-- M6 -->
+  <rect x="1250" y="1070" width="20" height="20" class="box-cmd"/><text x="1260" y="1085" class="text-box">0x08</text>
+  <rect x="1275" y="1070" width="45" height="20" class="box-cmd"/><text x="1297" y="1085" class="text-box">0x300A</text>
+  <text x="1285" y="1065" class="desc-text">PSW_ON+Single</text>
+  <rect x="1430" y="1070" width="20" height="20" class="box-cmd"/><text x="1440" y="1085" class="text-box">0x58</text>
+
+  <!-- M7 -->
+  <rect x="1450" y="1070" width="20" height="20" class="box-cmd"/><text x="1460" y="1085" class="text-box">0x08</text>
+  <rect x="1475" y="1070" width="45" height="20" class="box-cmd"/><text x="1497" y="1085" class="text-box">0x300A</text>
+  <text x="1485" y="1065" class="desc-text">PSW_ON+Single</text>
+  <rect x="1630" y="1070" width="20" height="20" class="box-cmd"/><text x="1640" y="1085" class="text-box">0x58</text>
+
+  <!-- D23 OFF -->
+  <rect x="1650" y="1070" width="20" height="20" class="box-cmd"/><text x="1660" y="1085" class="text-box">0x08</text>
+  <rect x="1675" y="1070" width="45" height="20" class="box-cmd"/><text x="1697" y="1085" class="text-box">0x2000</text>
+  <text x="1685" y="1065" class="desc-text">Idle+PSW_OFF</text>
+
+  <!-- 4. MISO (DOUT/RDY) -->
+  <text x="230" y="1160" class="track-label">MISO (DOUT/RDY)</text>
+  <text x="230" y="1175" class="track-sub">(~RDY активен низким)</text>
+  
+  <g>
+    <!-- D22 Sequence -->
+    <line x1="250" y1="1155" x2="430" y2="1155" class="sig-miso"/>
+    <text x="340" y="1145" class="desc-text">HIGH (Busy)</text>
+    <circle cx="430" cy="1155" r="4" fill="#ef4444"/>
+    <line x1="430" y1="1155" x2="435" y2="1155" class="sig-miso"/>
+    <line x1="435" y1="1155" x2="435" y2="1175" class="sig-miso"/>
+    <text x="430" y="1190" class="red-text" text-anchor="middle">RDY LOW</text>
+    <rect x="435" y="1145" width="40" height="20" class="box-resp"/><text x="455" y="1160" class="text-resp">24-bit</text>
+    
+    <line x1="475" y1="1155" x2="630" y2="1155" class="sig-miso"/>
+    <circle cx="630" cy="1155" r="4" fill="#ef4444"/>
+    <line x1="630" y1="1155" x2="635" y2="1155" class="sig-miso"/>
+    <line x1="635" y1="1155" x2="635" y2="1175" class="sig-miso"/>
+    <rect x="635" y="1145" width="40" height="20" class="box-resp"/><text x="655" y="1160" class="text-resp">24-bit</text>
+
+    <line x1="675" y1="1155" x2="830" y2="1155" class="sig-miso"/>
+    <circle cx="830" cy="1155" r="4" fill="#ef4444"/>
+    <line x1="830" y1="1155" x2="835" y2="1155" class="sig-miso"/>
+    <line x1="835" y1="1155" x2="835" y2="1175" class="sig-miso"/>
+    <rect x="835" y="1145" width="40" height="20" class="box-resp"/><text x="855" y="1160" class="text-resp">24-bit</text>
+
+    <line x1="875" y1="1155" x2="1030" y2="1155" class="sig-miso"/>
+    <circle cx="1030" cy="1155" r="4" fill="#ef4444"/>
+    <line x1="1030" y1="1155" x2="1035" y2="1155" class="sig-miso"/>
+    <line x1="1035" y1="1155" x2="1035" y2="1175" class="sig-miso"/>
+    <rect x="1035" y="1145" width="40" height="20" class="box-resp"/><text x="1055" y="1160" class="text-resp">24-bit</text>
+    <text x="1055" y="1220" class="desc-text">Данные веса M4</text>
+
+    <!-- D23 Sequence -->
+    <line x1="1130" y1="1155" x2="1230" y2="1155" class="sig-miso"/>
+    <text x="1180" y="1145" class="desc-text">HIGH (Busy)</text>
+    <circle cx="1230" cy="1155" r="4" fill="#ef4444"/>
+    <line x1="1230" y1="1155" x2="1235" y2="1155" class="sig-miso"/>
+    <line x1="1235" y1="1155" x2="1235" y2="1175" class="sig-miso"/>
+    <rect x="1235" y="1145" width="40" height="20" class="box-resp"/><text x="1255" y="1160" class="text-resp">24-bit</text>
+
+    <line x1="1275" y1="1155" x2="1430" y2="1155" class="sig-miso"/>
+    <circle cx="1430" cy="1155" r="4" fill="#ef4444"/>
+    <line x1="1430" y1="1155" x2="1435" y2="1155" class="sig-miso"/>
+    <line x1="1435" y1="1155" x2="1435" y2="1175" class="sig-miso"/>
+    <rect x="1435" y="1145" width="40" height="20" class="box-resp"/><text x="1455" y="1160" class="text-resp">24-bit</text>
+
+    <line x1="1475" y1="1155" x2="1630" y2="1155" class="sig-miso"/>
+    <circle cx="1630" cy="1155" r="4" fill="#ef4444"/>
+    <line x1="1630" y1="1155" x2="1635" y2="1155" class="sig-miso"/>
+    <line x1="1635" y1="1155" x2="1635" y2="1175" class="sig-miso"/>
+    <rect x="1635" y="1145" width="40" height="20" class="box-resp"/><text x="1655" y="1160" class="text-resp">24-bit</text>
+    <text x="1655" y="1220" class="desc-text">Данные M7</text>
+  </g>
+
+  <!-- 5. ADG888 (Ключи) -->
+  <text x="230" y="1290" class="track-label">ADG888 (SW_ADC)</text>
+  <path d="M250,1285 L1050,1285 L1050,1275 L1650,1275 L1650,1285 L2040,1285" class="sig-sw"/>
+  <text x="400" y="1270" class="legend" fill="#db2777">LOW (Прямая полярность: D22)</text>
+  <text x="1200" y="1270" class="legend" fill="#db2777">HIGH (Обратная полярность: D23)</text>
+  <text x="1850" y="1270" class="legend" fill="#db2777">LOW (Цикл повторяется)</text>
+
+  <!-- 6. PSW_1 (Питание D22) -->
+  <text x="230" y="1360" class="track-label">PSW_1 (D22)</text>
+  <path d="M250,1355 L250,1345 L1050,1345 L1050,1355 L2040,1355" class="sig-psw1"/>
+  <text x="400" y="1335" class="legend" fill="#8b5cf6">ON (Активен D22)</text>
+  <text x="1070" y="1335" class="legend" fill="#8b5cf6">OFF</text>
+
+  <!-- 7. PSW_2 (Питание D23) -->
+  <text x="230" y="1430" class="track-label">PSW_2 (D23)</text>
+  <path d="M250,1425 L1080,1425 L1080,1415 L1650,1415 L1650,1425 L2040,1425" class="sig-psw2"/>
+  <text x="1200" y="1405" class="legend" fill="#0ea5e9">ON (Активен D23)</text>
+  <text x="1670" y="1405" class="legend" fill="#0ea5e9">OFF</text>
+  
+  <!-- PSW Exclusivity + Settling Annotation -->
+  <text x="1065" y="1378" class="desc-text red-text" text-anchor="middle" font-size="10">PSW_1 OFF → SW → PSW_2 ON (10 мс)</text>
+  <text x="1065" y="1393" class="desc-text red-text" text-anchor="middle" font-size="10">→ settle 5 мс → M5 Start</text>
+  <text x="1065" y="1408" class="desc-text" fill="#b45309" text-anchor="middle" font-size="10" font-weight="bold">Δ всего ≈ 15 мс</text>
+
+  <!-- 8. 1-Wire (DS18B20) -->
+  <text x="230" y="1530" class="track-label">1-Wire (USART2)</text>
+  <text x="230" y="1575" class="track-sub">Broadcast Convert (Skip ROM),</text>
+  <text x="230" y="1590" class="track-sub">Read 3×Match ROM via DMA</text>
+  <line x1="250" y1="1530" x2="2040" y2="1530" class="line-lifeline"/>
+  
+  <!-- Phase 1: Convert T (Aligned with D22 measurement) -->
+  <g>
+    <text x="500" y="1495" class="desc-text green-text">Фаза 1: Broadcast Convert T (Skip ROM) — все 3 датчика одновременно</text>
+
+    <!-- Одна широковещательная посылка на всех -->
+    <rect x="270" y="1520" width="50" height="20" class="box-1wire"/><text x="295" y="1534" class="text-1wire">Reset</text>
+    <rect x="325" y="1520" width="60" height="20" class="box-1wire"/><text x="355" y="1534" class="text-1wire">Skip 0xCC</text>
+    <rect x="390" y="1520" width="60" height="20" class="box-1wire"/><text x="420" y="1534" class="text-1wire">Conv 0x44</text>
+
+    <!-- Все три датчика конвертируют в фоне; CPU свободен -->
+    <line x1="455" y1="1530" x2="1080" y2="1530" stroke="#f43f5e" stroke-width="2" stroke-dasharray="4 2"/>
+    <text x="770" y="1515" class="desc-text red-text" text-anchor="middle">Все 3 датчика конвертируют в фоне — ждём ~750 мс</text>
+  </g>
+
+  <!-- Phase 2: Read Scratchpad (Aligned with D23 measurement) -->
+    <g>
+    <text x="1350" y="1495" class="desc-text" fill="#831843">Фаза 2: Read Scratchpad via DMA (Match ROM + 64-bit ID)</text>
+
+    <!-- S1 Read -->
+    <rect x="1100" y="1520" width="40" height="20" class="box-1wire-read"/><text x="1120" y="1534" class="text-1wire-read">S1 Reset</text>
+    <rect x="1145" y="1520" width="40" height="20" class="box-1wire-read"/><text x="1165" y="1534" class="text-1wire-read">Match</text>
+    <rect x="1190" y="1520" width="50" height="20" class="box-1wire-read"/><text x="1215" y="1534" class="text-1wire-read">Read 9B</text>
+
+    <!-- S2 Read -->
+    <rect x="1270" y="1520" width="40" height="20" class="box-1wire-read"/><text x="1290" y="1534" class="text-1wire-read">S2 Reset</text>
+    <rect x="1315" y="1520" width="40" height="20" class="box-1wire-read"/><text x="1335" y="1534" class="text-1wire-read">Match</text>
+    <rect x="1360" y="1520" width="50" height="20" class="box-1wire-read"/><text x="1385" y="1534" class="text-1wire-read">Read 9B</text>
+
+    <!-- S3 Read -->
+    <rect x="1440" y="1520" width="40" height="20" class="box-1wire-read"/><text x="1460" y="1534" class="text-1wire-read">S3 Reset</text>
+    <rect x="1485" y="1520" width="40" height="20" class="box-1wire-read"/><text x="1505" y="1534" class="text-1wire-read">Match</text>
+    <rect x="1530" y="1520" width="50" height="20" class="box-1wire-read"/><text x="1555" y="1534" class="text-1wire-read">Read 9B</text>
+
+    <!-- Пояснение про DMA -->
+    <text x="1340" y="1560" class="desc-text" fill="#831843" text-anchor="middle">Каждое «Read 9B» = 9 байт принимаются USART2-RX-DMA → CRC → CPU-обработка</text>
+  </g>
+
+  <!-- Детали перехода D22 → D23: PSW_OFF + ADG + PSW_ON + Settle -->
+  <rect x="880" y="1650" width="300" height="130" fill="#fef3c7" stroke="#d97706" stroke-width="1.5" rx="4"/>
+  <text x="1030" y="1675" class="desc-text" fill="#78350f" text-anchor="middle" font-weight="bold" font-size="13">Переход D22 → D23 (≈15 мс)</text>
+  <text x="1030" y="1697" class="desc-text" fill="#78350f" text-anchor="middle" font-size="11">1. PSW_1 OFF (Mode 0x2000)</text>
+  <text x="1030" y="1714" class="desc-text" fill="#78350f" text-anchor="middle" font-size="11">2. ADG888 → D23 (tON=30 нс)</text>
+  <text x="1030" y="1731" class="desc-text" fill="#78350f" text-anchor="middle" font-size="11">3. PSW_2 ON (Mode 0x3000)</text>
+  <text x="1030" y="1748" class="desc-text red-text" text-anchor="middle" font-size="11" font-weight="bold">4. Settle 5 мс (мост + АЦП) ← обязательно!</text>
+  <text x="1030" y="1765" class="desc-text" fill="#78350f" text-anchor="middle" font-size="11">5. Start M5 (Mode 0x300A)</text>
+
+  <!-- Детали пробуждения: PSW_1 ON + Settle перед M1 -->
+  <rect x="1230" y="1650" width="300" height="100" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5" rx="4"/>
+  <text x="1380" y="1675" class="desc-text" fill="#1e3a8a" text-anchor="middle" font-weight="bold" font-size="13">Пробуждение (6000 мс → M1)</text>
+  <text x="1380" y="1697" class="desc-text" fill="#1e3a8a" text-anchor="middle" font-size="11">1. PSW_1 ON (Mode 0x3000)</text>
+  <text x="1380" y="1714" class="desc-text red-text" text-anchor="middle" font-size="11" font-weight="bold">2. Settle 5 мс</text>
+  <text x="1380" y="1731" class="desc-text" fill="#1e3a8a" text-anchor="middle" font-size="11">3. Start M1 (Mode 0x300A)</text>
+
+  <!-- ======================== БЛОК 3: КОММЕНТАРИИ ======================== -->
+  <rect x="30" y="2000" width="2040" height="1000" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" rx="8"/>
+  <text x="50" y="2040" class="block-title">Блок 3: Описание алгоритма работы (Справочник для программиста)</text>
+
+  <text x="50" y="2090" class="note"><tspan class="highlight" font-size="16">1. Архитектура шин и периферии</tspan></text>
+  <text x="50" y="2120" class="note">• <tspan class="highlight">SPI1 (Общая шина):</tspan> D22 (CS_ADC_1, PA4), D23 (CS_ADC_2, PA3) и Flash GD25Q64 (CS_FLASH, PA8). Линии MISO обоих АЦП объединены (PA6). DOUT/RDY — Open-Drain. <tspan class="highlight">SPI clock = 1 МГц.</tspan></text>
+  <text x="50" y="2150" class="note">• <tspan class="highlight">Управление ключами:</tspan> Сигнал SW_ADC (PB5) управляет ADG888. LOW — питание моста идет на D22 (прямое измерение), HIGH — на D23 (обратное измерение).</text>
+  <text x="50" y="2180" class="note">• <tspan class="highlight">Управление питанием:</tspan> Вывод PSW каждого АЦП управляется через 12-й бит (MR12) регистра Mode (адрес 0x08) по SPI. 1 = ON, 0 = OFF. <tspan class="red-text">Питание PSW_1 и PSW_2 строго эксклюзивно: перед включением PSW_2 необходимо убедиться, что PSW_1 выключен.</tspan></text>
+  <text x="50" y="2210" class="note">• <tspan class="highlight">I2C1:</tspan> EEPROM (0x50), RTC (0x68), LTC4151 (0x6A), LSM303 (0x19/0x1E). <tspan class="highlight">1-Wire (USART2):</tspan> Датчики DS18B20 (до 3 шт.), скорость 9600 бод.</text>
+
+  <text x="50" y="2260" class="note"><tspan class="highlight" font-size="16">2. Инициализация</tspan></text>
+  <text x="50" y="2290" class="note">• АЦП D22 и D23 сбрасываются (CS LOW -> 0xFFx4 -> CS HIGH). Считывается ID (CS LOW -> 0x40 -> CS HIGH -> MISO 0xX9).</text>
+  <text x="50" y="2320" class="note">• Для каждого канала выполняется калибровка: CS LOW -> 0x10, 0x0010 (Config) -> CS HIGH; CS LOW -> 0x08, <tspan class="green-text">0x900F</tspan> (Zero-Scale + <tspan class="green-text">PSW ON</tspan>) -> CS HIGH; Ожидание RDY HIGH → LOW. <tspan class="red-text">Full-Scale Cal (0x8010) НЕ выполняется.</tspan></text>
+  <text x="50" y="2350" class="note">• После калибровки читаются <tspan class="highlight">Offset</tspan> (comm 0x46) и <tspan class="highlight">Full-Scale</tspan> (comm 0x47) и сохраняются в EEPROM.</text>
+
+  <text x="50" y="2400" class="note"><tspan class="highlight" font-size="16">3. Измерительный цикл (Super-cycle)</tspan></text>
+  <text x="50" y="2430" class="note">• <tspan class="highlight">Начало (0 мс):</tspan> CS_1 LOW -> 0x10, 0x0010 (Config AIN1) -> CS_1 HIGH. CS_1 LOW -> 0x08, <tspan class="green-text">0x3000 (Mode: PSW_1 ON)</tspan> -> CS_1 HIGH. <tspan class="red-text">Пауза 5 мс (settling моста и входных цепей АЦП).</tspan> CS_1 LOW -> 0x08, 0x300A (Single Conv) -> CS_1 HIGH.</text>
+  <text x="50" y="2460" class="note">• <tspan class="highlight">Ожидание (480 мс):</tspan> MISO падает в LOW. CS_1 LOW -> 0x58 -> MISO читает 24 бита -> CS_1 HIGH.</text>
+  <text x="50" y="2490" class="note">• <tspan class="highlight">Переключение (1920 мс):</tspan> CS_1 LOW -> 0x08, <tspan class="red-text">0x2000 (Idle + PSW_1 OFF)</tspan> -> CS_1 HIGH. ADG888 → D23. <tspan class="red-text">Пауза 10 мс</tspan> (PSW exclusivity). CS_2 LOW -> 0x10, 0x0010 (Config AIN1) -> CS_2 HIGH. CS_2 LOW -> <tspan class="green-text">0x08, 0x3000 (Mode: PSW_2 ON)</tspan> -> CS_2 HIGH. <tspan class="red-text">Пауза 5 мс (settle) — критично для W_rev, т.к. sinc-фильтр не сброшен.</tspan> CS_2 LOW -> 0x08, 0x300A (Single Conv) -> CS_2 HIGH.</text>
+  <text x="50" y="2520" class="note">• <tspan class="highlight">Ожидание M5-M7:</tspan> Аналогично. По завершении M7 (3370 мс) выполняется чтение, затем CS_2 LOW -> 0x08, <tspan class="red-text">0x2000 (Idle Mode + PSW_2 OFF)</tspan> -> CS_2 HIGH.</text>
+
+  <text x="50" y="2570" class="note"><tspan class="highlight" font-size="16">4. Фоновые задачи (1-Wire DS18B20)</tspan></text>
+  <text x="50" y="2600" class="note">• <tspan class="highlight">Важно:</tspan> На шине 3 датчика. Для одновременного старта конверсии безопасно использовать <tspan class="highlight">Skip ROM (0xCC)</tspan> — датчики только принимают команду и не передают данные, коллизии нет. Для чтения обязателен <tspan class="highlight">Match ROM (0x55)</tspan> с 64-битным ID — иначе несколько датчиков начнут передачу одновременно.</text>
+  <text x="50" y="2630" class="note">• <tspan class="highlight">Фаза 1 (Broadcast Convert T) — во время работы D22 (0–1920 мс):</tspan> Reset → Skip ROM (0xCC) → Convert T (0x44). Все 3 датчика запускают конверсию одновременно и уходят в фон на ~750 мс. Процессор в это время занят SPI-опросом D22, USART2/DMA простаивают.</text>
+  <text x="50" y="2660" class="note">• <tspan class="highlight">Фаза 2 (Read via DMA) — во время работы D23 (1920–3370 мс):</tspan> Для S1, S2, S3 по очереди: Reset → Match ROM (0x55) + ID → Read Scratchpad (0xBE). Приём 9 байт каждого датчика выполняется <tspan class="highlight">USART2 RX + DMA</tspan> — CPU получает готовый буфер и проверяет CRC. Пока идёт приём через DMA, ядро параллельно обслуживает SPI-транзакции D23.</text>
+  <text x="50" y="2690" class="note">• <tspan class="highlight">IDLE / SLEEP (3370-6000 мс):</tspan> Шина 1-Wire свободна, команды не передаются.</text>
+  
+  <text x="50" y="2720" class="note">• <tspan class="highlight">SPI Flash:</tspan> Логирование 28-байтных структур. CS_FLASH поднимается только на время записи.</text>
+  <text x="50" y="2750" class="note">• <tspan class="highlight">I2C:</tspan> Опрос RTC, акселерометра LSM303, чтение тока нагревателя LTC4151 (в фоновом режиме).</text>
+
+  <text x="50" y="2800" class="note"><tspan class="red-text">Критически важно:</tspan> 1. PSW управляется через регистр Mode (0x3000 — только ON, 0x300A — ON + Single Conv, 0x2000 — OFF в Idle). 2. При калибровке PSW включается через 0x900F (Zero-Scale + PSW ON); settling 5 мс перед калибровкой обязателен.</text>
+  <text x="50" y="2820" class="note">3. Переключение PSW_1 → PSW_2: PSW_1 OFF → пауза 10 мс → PSW_2 ON → <tspan class="red-text">settle 5 мс</tspan> → старт конверсии (0x300A). 4. 1-Wire работает в фазах, когда SPI не занят. 5. SPI = 1 МГц, полный цикл команды Mode (0x08 + 16-бит) ≈ 24 мкс — пауза settle доминирует в переходе.</text>
+  <!-- Легенда -->
+  <rect x="1600" y="2020" width="15" height="15" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="1625" y="2033" class="legend">SPI Команда</text>
+  <rect x="1750" y="2020" width="15" height="15" fill="#ecfdf5" stroke="#10b981" stroke-width="1.5"/>
+  <text x="1775" y="2033" class="legend">SPI Ответ</text>
+
+  <rect x="1600" y="2050" width="15" height="15" fill="#f5f3ff" stroke="#8b5cf6" stroke-width="1.5"/>
+  <text x="1625" y="2063" class="legend">I2C Данные</text>
+  <rect x="1750" y="2050" width="15" height="15" fill="#fff1f2" stroke="#f43f5e" stroke-width="1.5"/>
+  <text x="1775" y="2063" class="legend">1-Wire Команда (Конвертация)</text>
+  
+  <rect x="1600" y="2080" width="15" height="15" fill="#fce7f3" stroke="#db2777" stroke-width="1.5"/>
+  <text x="1625" y="2093" class="legend">1-Wire Чтение</text>
+
+  <line x1="1600" y1="2115" x2="1630" y2="2115" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="1640" y="2120" class="legend">Критическое время</text>
+</svg>

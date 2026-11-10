@@ -1,0 +1,12 @@
+stm32f1xx_ll_gpio.h:804:22:LL_GPIO_SetOutputPin	1
+stm32f1xx_ll_gpio.h:833:22:LL_GPIO_ResetOutputPin	1
+stm32f1xx_ll_gpio.h:862:22:LL_GPIO_TogglePin	1
+bsp_gpio.c:4:6:BSP_LED_V15_Set	2
+bsp_gpio.c:9:6:BSP_LED_V16_Set	2
+bsp_gpio.c:14:6:BSP_LED_V16_Toggle	1
+bsp_gpio.c:19:6:BSP_CS_ADC1_Set	2
+bsp_gpio.c:24:6:BSP_CS_ADC2_Set	2
+bsp_gpio.c:29:6:BSP_CS_FLASH_Set	2
+bsp_gpio.c:34:6:BSP_CS_PS09_Set	2
+bsp_gpio.c:40:6:BSP_PSW_1_Set	1
+bsp_gpio.c:45:6:BSP_PSW_2_Set	1

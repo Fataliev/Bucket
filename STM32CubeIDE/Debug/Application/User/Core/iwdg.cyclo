@@ -1,0 +1,7 @@
+stm32f1xx_ll_iwdg.h:141:22:LL_IWDG_Enable	1
+stm32f1xx_ll_iwdg.h:152:22:LL_IWDG_ReloadCounter	1
+stm32f1xx_ll_iwdg.h:163:22:LL_IWDG_EnableWriteAccess	1
+stm32f1xx_ll_iwdg.h:193:22:LL_IWDG_SetPrescaler	1
+stm32f1xx_ll_iwdg.h:223:22:LL_IWDG_SetReloadCounter	1
+stm32f1xx_ll_iwdg.h:276:26:LL_IWDG_IsReady	2
+iwdg.c:28:6:MX_IWDG_Init	2

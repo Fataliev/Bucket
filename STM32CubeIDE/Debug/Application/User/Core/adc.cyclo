@@ -1,0 +1,8 @@
+core_cm3.h:1499:26:__NVIC_GetPriorityGrouping	1
+core_cm3.h:1511:22:__NVIC_EnableIRQ	2
+core_cm3.h:1639:22:__NVIC_SetPriority	2
+core_cm3.h:1686:26:NVIC_EncodePriority	2
+stm32f1xx_ll_adc.h:2131:22:LL_ADC_REG_SetSequencerRanks	1
+stm32f1xx_ll_adc.h:2837:22:LL_ADC_SetChannelSamplingTime	1
+stm32f1xx_ll_bus.h:763:22:LL_APB2_GRP1_EnableClock	1
+adc.c:28:6:MX_ADC1_Init	1

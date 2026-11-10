@@ -1,0 +1,5 @@
+stm32f1xx_ll_rcc.h:1329:22:LL_RCC_EnableRTC	1
+stm32f1xx_ll_bus.h:447:22:LL_APB1_GRP1_EnableClock	1
+stm32f1xx_ll_pwr.h:165:22:LL_PWR_EnableBkUpAccess	1
+stm32f1xx_ll_rtc.h:277:22:LL_RTC_SetAsynchPrescaler	1
+rtc.c:28:6:MX_RTC_Init	1
