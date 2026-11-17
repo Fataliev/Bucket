@@ -1,0 +1,11 @@
+../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_usart.h:1839:26:LL_USART_IsActiveFlag_RXNE	16	static
+../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_usart.h:1850:26:LL_USART_IsActiveFlag_TC	16	static
+../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_usart.h:2015:22:LL_USART_ClearFlag_TC	16	static
+../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_usart.h:2026:22:LL_USART_ClearFlag_RXNE	16	static
+../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_usart.h:2450:25:LL_USART_ReceiveData8	16	static
+../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_usart.h:2473:22:LL_USART_TransmitData8	16	static
+../Platform/Src/onewire_uart.c:7:6:OW_Init	4	static
+../Platform/Src/onewire_uart.c:11:9:OW_Reset	16	static
+../Platform/Src/onewire_uart.c:44:6:OW_WriteByte	24	static
+../Platform/Src/onewire_uart.c:59:9:OW_ReadByte	16	static
+../Platform/Src/onewire_uart.c:80:9:OW_ReadBit	16	static

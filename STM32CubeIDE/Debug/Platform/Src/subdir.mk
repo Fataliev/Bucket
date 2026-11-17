@@ -6,14 +6,23 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../Platform/Src/bsp_gpio.c \
+../Platform/Src/onewire_uart.c \
+../Platform/Src/periph_spi.c \
+../Platform/Src/periph_usart.c \
 ../Platform/Src/platform_tick.c 
 
 OBJS += \
 ./Platform/Src/bsp_gpio.o \
+./Platform/Src/onewire_uart.o \
+./Platform/Src/periph_spi.o \
+./Platform/Src/periph_usart.o \
 ./Platform/Src/platform_tick.o 
 
 C_DEPS += \
 ./Platform/Src/bsp_gpio.d \
+./Platform/Src/onewire_uart.d \
+./Platform/Src/periph_spi.d \
+./Platform/Src/periph_usart.d \
 ./Platform/Src/platform_tick.d 
 
 
@@ -24,7 +33,7 @@ Platform/Src/%.o Platform/Src/%.su Platform/Src/%.cyclo: ../Platform/Src/%.c Pla
 clean: clean-Platform-2f-Src
 
 clean-Platform-2f-Src:
-	-$(RM) ./Platform/Src/bsp_gpio.cyclo ./Platform/Src/bsp_gpio.d ./Platform/Src/bsp_gpio.o ./Platform/Src/bsp_gpio.su ./Platform/Src/platform_tick.cyclo ./Platform/Src/platform_tick.d ./Platform/Src/platform_tick.o ./Platform/Src/platform_tick.su
+	-$(RM) ./Platform/Src/bsp_gpio.cyclo ./Platform/Src/bsp_gpio.d ./Platform/Src/bsp_gpio.o ./Platform/Src/bsp_gpio.su ./Platform/Src/onewire_uart.cyclo ./Platform/Src/onewire_uart.d ./Platform/Src/onewire_uart.o ./Platform/Src/onewire_uart.su ./Platform/Src/periph_spi.cyclo ./Platform/Src/periph_spi.d ./Platform/Src/periph_spi.o ./Platform/Src/periph_spi.su ./Platform/Src/periph_usart.cyclo ./Platform/Src/periph_usart.d ./Platform/Src/periph_usart.o ./Platform/Src/periph_usart.su ./Platform/Src/platform_tick.cyclo ./Platform/Src/platform_tick.d ./Platform/Src/platform_tick.o ./Platform/Src/platform_tick.su
 
 .PHONY: clean-Platform-2f-Src
 

@@ -1,0 +1,15 @@
+../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_usart.h:1850:26:LL_USART_IsActiveFlag_TC	16	static
+../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_usart.h:1861:26:LL_USART_IsActiveFlag_TXE	16	static
+../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_usart.h:2000:22:LL_USART_ClearFlag_IDLE	24	static
+../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_usart.h:2071:22:LL_USART_EnableIT_IDLE	16	static
+../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_usart.h:2396:22:LL_USART_EnableDMAReq_TX	16	static
+../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_usart.h:2473:22:LL_USART_TransmitData8	16	static
+../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_dma.h:454:22:LL_DMA_EnableChannel	16	static
+../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_dma.h:473:22:LL_DMA_DisableChannel	16	static
+../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_dma.h:880:22:LL_DMA_SetDataLength	24	static
+../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_dma.h:965:22:LL_DMA_SetMemoryAddress	24	static
+../Platform/Src/periph_usart.c:8:6:USART_Platform_Init	4	static
+../Platform/Src/periph_usart.c:14:6:USART_Transmit_Blocking	32	static
+../Platform/Src/periph_usart.c:22:9:USART_Transmit_DMA	24	static
+../Platform/Src/periph_usart.c:53:9:USART_IsTxBusy	16	static
+../Platform/Src/periph_usart.c:60:6:USART_EnableIdleIT	16	static

@@ -1,0 +1,11 @@
+stm32f1xx_ll_usart.h:1839:26:LL_USART_IsActiveFlag_RXNE	1
+stm32f1xx_ll_usart.h:1850:26:LL_USART_IsActiveFlag_TC	1
+stm32f1xx_ll_usart.h:2015:22:LL_USART_ClearFlag_TC	1
+stm32f1xx_ll_usart.h:2026:22:LL_USART_ClearFlag_RXNE	1
+stm32f1xx_ll_usart.h:2450:25:LL_USART_ReceiveData8	1
+stm32f1xx_ll_usart.h:2473:22:LL_USART_TransmitData8	1
+onewire_uart.c:7:6:OW_Init	1
+onewire_uart.c:11:9:OW_Reset	7
+onewire_uart.c:44:6:OW_WriteByte	4
+onewire_uart.c:59:9:OW_ReadByte	5
+onewire_uart.c:80:9:OW_ReadBit	3

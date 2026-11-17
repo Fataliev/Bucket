@@ -32,6 +32,9 @@
 /* USER CODE BEGIN Includes */
 #include "platform_tick.h"
 #include "bsp_gpio.h"
+#include "periph_spi.h"
+#include "periph_usart.h"
+#include <stddef.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -62,7 +65,19 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+static uint8_t spi_test_passed = 0;
+static uint8_t spi_tx_buf[4] = {0xAA, 0x55, 0x12, 0x34};
+static uint8_t spi_rx_buf[4] = {0};
 
+// Коллбэк, который вызовется после завершения передачи через прерывания
+void My_SPI_Callback(void *context, uint8_t *data, uint16_t len) {
+    // Проверяем, совпадают ли отправленные и принятые данные
+    if (data[0] == 0xAA && data[1] == 0x55 && data[2] == 0x12 && data[3] == 0x34) {
+        spi_test_passed = 1; // Тест пройден!
+    } else {
+        spi_test_passed = 0; // Ошибка
+    }
+}
 /* USER CODE END 0 */
 
 /**
@@ -107,23 +122,33 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_DMA_Init();
   MX_ADC1_Init();
   MX_I2C1_Init();
   MX_RTC_Init();
   MX_SPI1_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
-
+  MX_DMA_Init();
   MX_USART3_UART_Init();
   MX_IWDG_Init();
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM4_Init();
-
   /* USER CODE BEGIN 2 */
-  // Объявляем переменную ДО цикла while
-   uint32_t last_led_toggle = GetTick();
+
+   Platform_TickInit();
+   SPI_Platform_Init();
+   USART_Platform_Init();
+
+   // Запускаем TIM3 для генерации прерываний каждую 1 мс
+   LL_TIM_EnableIT_UPDATE(TIM3);
+   LL_TIM_EnableCounter(TIM3);
+
+   uint32_t last_spi_test = GetTick();
+   // Теперь безопасно читать тик
+    uint32_t last_led_toggle = GetTick();
+    BSP_LED_V16_Set(1); // Проверочное включение
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -131,13 +156,29 @@ int main(void)
   while (1)
   {
 
-	    // Мигаем светодиодом V16 каждые 500 мс (частота 1 Гц)
-	    if ((GetTick() - last_led_toggle) >= 500) {
-	        BSP_LED_V16_Toggle();
-	        last_led_toggle = GetTick();
-	    }
+	  // Раз в 1000 мс запускаем тест SPI
+	       if ((uint32_t)(GetTick() - last_spi_test) >= 1000)
+	       {
+	           last_spi_test = GetTick();
 
-	    /* USER CODE END WHILE */
+	           // Очищаем приемный буфер
+	           spi_rx_buf[0] = 0; spi_rx_buf[1] = 0; spi_rx_buf[2] = 0; spi_rx_buf[3] = 0;
+
+	           // Запускаем асинхронную передачу/прием (4 байта)
+	           // Передаем указатель на наш коллбэк
+	           SPI_TransmitReceive_IT(spi_tx_buf, spi_rx_buf, 4, My_SPI_Callback, NULL);
+	       }
+
+	       // Управляем светодиодом в зависимости от результата
+	       if (spi_test_passed) {
+	           BSP_LED_V16_Set(1); // Если данные прошли - светодиод горит
+	       } else {
+	           BSP_LED_V16_Toggle(); // Если ошибка или ожидание - мигает
+	           // Небольшая задержка, чтобы мигание было заметным
+	           for(volatile uint32_t i = 0; i < 100000; i++);
+	       }
+
+    /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }

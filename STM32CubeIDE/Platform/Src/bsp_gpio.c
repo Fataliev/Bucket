@@ -1,18 +1,30 @@
 #include "bsp_gpio.h"
 
 // --- Управление светодиодами ---
-void BSP_LED_V15_Set(uint8_t state) {
-    if (state) LL_GPIO_SetOutputPin(USB_LED_GPIO_Port, USB_LED_Pin);
-    else       LL_GPIO_ResetOutputPin(USB_LED_GPIO_Port, USB_LED_Pin);
-}
+// ВАЖНО: Судя по схеме (V16), анод светодиода подключен к 3.3В,
+// а катод через резистор к PB15. Поэтому для включения (ON) нам нужно
+// подать НИЗКИЙ уровень (Reset), а для выключения (OFF) - ВЫСОКИЙ (Set).
 
 void BSP_LED_V16_Set(uint8_t state) {
-    if (state) LL_GPIO_SetOutputPin(Led_MK_GPIO_Port, Led_MK_Pin);
-    else       LL_GPIO_ResetOutputPin(Led_MK_GPIO_Port, Led_MK_Pin);
+    if (state) {
+    	LL_GPIO_SetOutputPin(Led_MK_GPIO_Port, Led_MK_Pin);   // 1 = Светодиод Горит
+    } else {
+    	LL_GPIO_ResetOutputPin(Led_MK_GPIO_Port, Led_MK_Pin); // 0 = Светодиод Погашен
+    }
 }
 
 void BSP_LED_V16_Toggle(void) {
-    LL_GPIO_TogglePin(Led_MK_GPIO_Port, Led_MK_Pin);
+    if (LL_GPIO_IsOutputPinSet(Led_MK_GPIO_Port, Led_MK_Pin)) {
+        LL_GPIO_ResetOutputPin(Led_MK_GPIO_Port, Led_MK_Pin); // Был 1 -> ставим 0 (ВКЛ)
+    } else {
+        LL_GPIO_SetOutputPin(Led_MK_GPIO_Port, Led_MK_Pin);   // Был 0 -> ставим 1 (ВЫКЛ)
+    }
+}
+
+void BSP_LED_V15_Set(uint8_t state) {
+    // На схеме V15 подключен к PB12. Логика аналогичная.
+    if (state) LL_GPIO_ResetOutputPin(USB_LED_GPIO_Port, USB_LED_Pin);
+    else       LL_GPIO_SetOutputPin(USB_LED_GPIO_Port, USB_LED_Pin);
 }
 
 // --- Управление CS (Активный уровень - низкий) ---

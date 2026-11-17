@@ -3,4 +3,5 @@
 ../../Drivers/CMSIS/Include/core_cm3.h:1639:22:__NVIC_SetPriority	16	static
 ../../Drivers/CMSIS/Include/core_cm3.h:1686:26:NVIC_EncodePriority	40	static
 ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_bus.h:763:22:LL_APB2_GRP1_EnableClock	24	static
+../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_spi.h:290:22:LL_SPI_Enable	16	static
 C:/Users/user/Documents/GitHub/Bucket/Core/Src/spi.c:28:6:MX_SPI1_Init	72	static

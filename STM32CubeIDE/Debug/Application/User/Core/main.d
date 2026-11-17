@@ -28,7 +28,9 @@ Application/User/Core/main.o: \
  ../../Core/Inc/i2c.h ../../Core/Inc/iwdg.h ../../Core/Inc/rtc.h \
  ../../Core/Inc/spi.h ../../Core/Inc/tim.h ../../Core/Inc/usart.h \
  ../../Core/Inc/gpio.h ../../STM32CubeIDE/Platform/Inc/platform_tick.h \
- ../../STM32CubeIDE/Platform/Inc/bsp_gpio.h
+ ../../STM32CubeIDE/Platform/Inc/bsp_gpio.h \
+ ../../STM32CubeIDE/Platform/Inc/periph_spi.h \
+ ../../STM32CubeIDE/Platform/Inc/periph_usart.h
 ../../Core/Inc/main.h:
 ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_adc.h:
 ../../Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f1xx.h:
@@ -65,3 +67,5 @@ Application/User/Core/main.o: \
 ../../Core/Inc/gpio.h:
 ../../STM32CubeIDE/Platform/Inc/platform_tick.h:
 ../../STM32CubeIDE/Platform/Inc/bsp_gpio.h:
+../../STM32CubeIDE/Platform/Inc/periph_spi.h:
+../../STM32CubeIDE/Platform/Inc/periph_usart.h:

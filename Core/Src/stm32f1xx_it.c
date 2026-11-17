@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "platform_tick.h"
+#include "periph_spi.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -184,7 +185,6 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
-	  Platform_IncTick();
   /* USER CODE END SysTick_IRQn 0 */
 
   /* USER CODE BEGIN SysTick_IRQn 1 */
@@ -281,7 +281,10 @@ void ADC1_2_IRQHandler(void)
 void TIM3_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM3_IRQn 0 */
-
+	if (LL_TIM_IsActiveFlag_UPDATE(TIM3)) {
+	      LL_TIM_ClearFlag_UPDATE(TIM3);
+	      Platform_IncTick(); // Инкрементируем тик каждую 1 мс
+	  }
   /* USER CODE END TIM3_IRQn 0 */
   /* USER CODE BEGIN TIM3_IRQn 1 */
 
@@ -335,7 +338,7 @@ void I2C1_ER_IRQHandler(void)
 void SPI1_IRQHandler(void)
 {
   /* USER CODE BEGIN SPI1_IRQn 0 */
-
+	  SPI_IRQ_Handler(); // Перенаправляем прерывание в наш слой Platform
   /* USER CODE END SPI1_IRQn 0 */
   /* USER CODE BEGIN SPI1_IRQn 1 */
 
