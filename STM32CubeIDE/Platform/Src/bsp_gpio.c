@@ -57,3 +57,8 @@ void BSP_PSW_1_Set(uint8_t state) {
 void BSP_PSW_2_Set(uint8_t state) {
     (void)state;
 }
+
+void BSP_SW_ADC_Set(uint8_t state) {
+    if (state) LL_GPIO_SetOutputPin(SW_ADC_GPIO_Port, SW_ADC_Pin);
+    else       LL_GPIO_ResetOutputPin(SW_ADC_GPIO_Port, SW_ADC_Pin);
+}

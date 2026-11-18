@@ -15,6 +15,7 @@ RM := rm -rf
 -include Drivers/CMSIS/subdir.mk
 -include Application/User/Startup/subdir.mk
 -include Application/User/Core/subdir.mk
+-include App/Measurement/Src/subdir.mk
 -include objects.mk
 
 ifneq ($(MAKECMDGOALS),clean)

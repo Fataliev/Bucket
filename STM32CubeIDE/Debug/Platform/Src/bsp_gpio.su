@@ -10,3 +10,4 @@
 ../Platform/Src/bsp_gpio.c:46:6:BSP_CS_PS09_Set	16	static
 ../Platform/Src/bsp_gpio.c:52:6:BSP_PSW_1_Set	16	static
 ../Platform/Src/bsp_gpio.c:57:6:BSP_PSW_2_Set	16	static
+../Platform/Src/bsp_gpio.c:61:6:BSP_SW_ADC_Set	16	static

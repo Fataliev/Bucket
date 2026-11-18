@@ -36,6 +36,8 @@
 #include "periph_usart.h"
 #include "adg888.h"
 #include "ad7799.h"
+#include "measure_fsm.h"
+#include "usb_ft232.h"
 
 #include <stddef.h>
 /* USER CODE END Includes */
@@ -68,121 +70,6 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-volatile uint8_t g_adc1_id = 0xFF;
-volatile uint8_t g_adc2_id = 0xFF;
-volatile uint32_t g_adc1_data = 0;
-volatile uint32_t g_adc2_data = 0;
-volatile uint8_t g_adc1_status = 0xFF;
-volatile uint8_t g_adc2_status = 0xFF;
-
-/////////////////
-
-
-volatile uint8_t g_adc1_mode_h = 0xFF;
-volatile uint8_t g_adc1_mode_l = 0xFF;
-volatile uint8_t g_adc1_config_h = 0xFF;
-volatile uint8_t g_adc1_config_l = 0xFF;
-volatile uint8_t g_adc1_io = 0xFF;
-
-// Тестовая функция для последовательного опроса всех регистров
-void AD7799_Test(AD7799_Channel_t ch) {
-    uint8_t tx_buf[4];
-    uint8_t rx_buf[4];
-
-    // 1. Чтение Status Register
-    tx_buf[0] = 0x40;
-    tx_buf[1] = 0x00;
-    if (ch == AD7799_CH1) {
-        BSP_CS_ADC1_Set(0);
-    } else {
-        BSP_CS_ADC2_Set(0);
-    }
-    SPI_TransmitReceive_Blocking(tx_buf, rx_buf, 2);
-    if (ch == AD7799_CH1) {
-        BSP_CS_ADC1_Set(1);
-        g_adc1_status = rx_buf[1];
-    } else {
-        BSP_CS_ADC2_Set(1);
-        g_adc2_status = rx_buf[1];
-    }
-
-    // Пауза 1 мс
-    for (volatile uint32_t i = 0; i < 72000; i++);
-
-    // 2. Чтение ID Register
-    tx_buf[0] = 0x44;
-    tx_buf[1] = 0x00;
-    if (ch == AD7799_CH1) {
-        BSP_CS_ADC1_Set(0);
-    } else {
-        BSP_CS_ADC2_Set(0);
-    }
-    SPI_TransmitReceive_Blocking(tx_buf, rx_buf, 2);
-    if (ch == AD7799_CH1) {
-        BSP_CS_ADC1_Set(1);
-        g_adc1_id = rx_buf[1];
-    } else {
-        BSP_CS_ADC2_Set(1);
-        g_adc2_id = rx_buf[1];
-    }
-
-    // Пауза 1 мс
-    for (volatile uint32_t i = 0; i < 72000; i++);
-
-    // 3. Чтение Mode Register (2 байта данных)
-    tx_buf[0] = 0x48;
-    tx_buf[1] = 0x00;
-    tx_buf[2] = 0x00;
-    if (ch == AD7799_CH1) {
-        BSP_CS_ADC1_Set(0);
-    } else {
-        BSP_CS_ADC2_Set(0);
-    }
-    SPI_TransmitReceive_Blocking(tx_buf, rx_buf, 3);
-    if (ch == AD7799_CH1) {
-        BSP_CS_ADC1_Set(1);
-        g_adc1_mode_h = rx_buf[1];
-        g_adc1_mode_l = rx_buf[2];
-    }
-
-    // Пауза 1 мс
-    for (volatile uint32_t i = 0; i < 72000; i++);
-
-    // 4. Чтение Config Register (2 байта данных)
-    tx_buf[0] = 0x50;
-    tx_buf[1] = 0x00;
-    tx_buf[2] = 0x00;
-    if (ch == AD7799_CH1) {
-        BSP_CS_ADC1_Set(0);
-    } else {
-        BSP_CS_ADC2_Set(0);
-    }
-    SPI_TransmitReceive_Blocking(tx_buf, rx_buf, 3);
-    if (ch == AD7799_CH1) {
-        BSP_CS_ADC1_Set(1);
-        g_adc1_config_h = rx_buf[1];
-        g_adc1_config_l = rx_buf[2];
-    }
-
-    // Пауза 1 мс
-    for (volatile uint32_t i = 0; i < 72000; i++);
-
-    // 5. Чтение I/O Register (1 байт данных)
-    tx_buf[0] = 0x68;
-    tx_buf[1] = 0x00;
-    if (ch == AD7799_CH1) {
-        BSP_CS_ADC1_Set(0);
-    } else {
-        BSP_CS_ADC2_Set(0);
-    }
-    SPI_TransmitReceive_Blocking(tx_buf, rx_buf, 2);
-    if (ch == AD7799_CH1) {
-        BSP_CS_ADC1_Set(1);
-        g_adc1_io = rx_buf[1];
-    }
-}
-\
-
 
 /* USER CODE END 0 */
 
@@ -251,21 +138,30 @@ int main(void)
 
    Platform_TickInit();
    SPI_Platform_Init();
+
+   // Инициализация USB
+   USB_FT232_Init();
+   USB_FT232_SendString("=== Bucket System Started ===\r\n");
+   USB_FT232_Printf("System tick: %lu ms\r\n", GetTick());
+
+
    USART_Platform_Init();
    ADG888_Init();
    AD7799_Init();
+   MeasureFSM_Init();
 
-   // ПРАВИЛЬНАЯ проверка ID (команда 0xC0)
-  // g_adc1_id = AD7799_CheckID(AD7799_CH1);  // Должно быть 0x0A
-  // g_adc2_id = AD7799_CheckID(AD7799_CH2);  // Должно быть 0x0A
+   // do_calib=0 на отладке (быстрый старт); =1 для полной калибровки
+  //AD7799_Init(0);
+   //g_adc1_id = AD7799_ReadID(AD7799_CH1);
+  // g_adc2_id = AD7799_ReadID(AD7799_CH2);
 
 
-
-
+   uint32_t last_diag = GetTick();
+   uint32_t last_usb_test = GetTick();
    uint32_t last_adc_test = GetTick();
-   uint32_t last_spi_test = GetTick();
-   uint32_t last_test = GetTick();
-
+   //uint32_t last_spi_test = GetTick();
+  // uint32_t last_test = GetTick();
+   //uint32_t last_cycle = GetTick();
 
 
 
@@ -277,18 +173,26 @@ int main(void)
   { // 1. КОРМЛЕНИЕ СТОРОЖЕВОГО ТАЙМЕРА (Критически важно!)
 	  LL_IWDG_ReloadCounter(IWDG);
 
-	  if ((uint32_t)(GetTick() - last_test) >= 2000) {
-	        last_test = GetTick();
-	        AD7799_Test(AD7799_CH1);
-	    }
+	    if ((uint32_t)(GetTick() - last_diag) >= 1000) {
+	        last_diag = GetTick();
 
-	    // Принимаем ID = 0x08 (AD7798) или 0x0A (AD7799)
-	    if ((g_adc1_id == 0x08 || g_adc1_id == 0x0A) &&
-	        (g_adc1_status == 0x08)) {
-	        BSP_LED_V16_Set(1);  // АЦП работает
-	    } else {
-	        BSP_LED_V16_Toggle();
-	    }
+	        uint8_t  st  = AD7799_ReadStatus(AD7799_CH1);
+	        uint8_t  id  = AD7799_CheckID(AD7799_CH1);
+	        uint16_t md  = AD7799_ReadMode(AD7799_CH1);
+	        uint16_t cf  = AD7799_ReadConfig(AD7799_CH1);
+	        uint8_t  id2 = AD7799_CheckID(AD7799_CH2);
+
+	        USB_FT232_Printf("CH1: ID=0x%02X ST=0x%02X MODE=0x%04X CFG=0x%04X | CH2 ID=0x%02X\r\n",
+	                         id, st, md, cf, id2);
+
+	        if ((id == AD7799_ID_AD7799 || id == AD7799_ID_AD7798) &&
+	            (id2 == AD7799_ID_AD7799 || id2 == AD7799_ID_AD7798)) {
+	            BSP_LED_V16_Set(1);
+	        } else {
+	            BSP_LED_V16_Toggle();
+	        }
+
+	}
 
     /* USER CODE END WHILE */
 

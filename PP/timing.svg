@@ -133,7 +133,7 @@
   <!-- D22 -->
   <rect x="275" y="550" width="40" height="20" class="box-cmd"/><text x="295" y="565" class="text-box">0xFF</text>
   <text x="295" y="545" class="desc-text">x4</text>
-  <rect x="355" y="550" width="40" height="20" class="box-cmd"/><text x="375" y="565" class="text-box">0x40</text>
+  <rect x="355" y="550" width="40" height="20" class="box-cmd"/><text x="375" y="565" class="text-box">0x43</text>
   <rect x="435" y="550" width="40" height="20" class="box-cmd"/><text x="455" y="565" class="text-box">0x10</text>
   <rect x="485" y="550" width="60" height="20" class="box-cmd"/><text x="515" y="565" class="text-box">0x0010</text>
   <rect x="615" y="550" width="60" height="20" class="box-cmd"/><text x="645" y="565" class="text-box">0x900F</text>
@@ -142,7 +142,7 @@
   <text x="695" y="545" class="red-text">⚠</text>
   <!-- D23 -->
   <rect x="765" y="550" width="40" height="20" class="box-cmd"/><text x="785" y="565" class="text-box">0xFF</text>
-  <rect x="845" y="550" width="40" height="20" class="box-cmd"/><text x="865" y="565" class="text-box">0x40</text>
+  <rect x="845" y="550" width="40" height="20" class="box-cmd"/><text x="865" y="565" class="text-box">0x43</text>
   <rect x="925" y="550" width="40" height="20" class="box-cmd"/><text x="945" y="565" class="text-box">0x10</text>
   <rect x="975" y="550" width="60" height="20" class="box-cmd"/><text x="1005" y="565" class="text-box">0x0010</text>
   <rect x="1105" y="550" width="60" height="20" class="box-cmd"/><text x="1135" y="565" class="text-box">0x900F</text>
@@ -157,7 +157,7 @@
   <rect x="895" y="610" width="50" height="20" class="box-resp"/><text x="920" y="625" class="text-resp">0xX9</text>
   <text x="920" y="605" class="desc-text">ID OK</text>
   <text x="700" y="640" class="desc-text">RDY HIGH → LOW (калибровка завершена)</text>
-  <text x="730" y="660" class="desc-text">После RDY LOW: Read Offset (0x46, 24-bit) → Read FS (0x47, 24-bit) → EEPROM</text>
+  <text x="730" y="660" class="desc-text">После RDY LOW: Read Offset (0x70, 24-bit) → Read FS (0x78, 24-bit) → EEPROM</text>
 
   <text x="50" y="690" class="note">• <tspan class="highlight">SPI:</tspan> Сброс, проверка ID. Калибровка: запись Config (выбор канала), затем Mode <tspan class="red-text">0x900F</tspan> (Zero-Scale + <tspan class="green-text">PSW ON</tspan>). Full-Scale Cal не выполняется (не поддерживается при Gain=128).</text>
   <text x="50" y="715" class="note">• <tspan class="highlight">I2C:</tspan> Последовательный опрос всех узлов: EEPROM (чтение калибровок), RTC, датчик тока LTC4151, акселерометр/магнитометр LSM303.</text>
@@ -467,9 +467,9 @@
   <text x="50" y="2210" class="note">• <tspan class="highlight">I2C1:</tspan> EEPROM (0x50), RTC (0x68), LTC4151 (0x6A), LSM303 (0x19/0x1E). <tspan class="highlight">1-Wire (USART2):</tspan> Датчики DS18B20 (до 3 шт.), скорость 9600 бод.</text>
 
   <text x="50" y="2260" class="note"><tspan class="highlight" font-size="16">2. Инициализация</tspan></text>
-  <text x="50" y="2290" class="note">• АЦП D22 и D23 сбрасываются (CS LOW -> 0xFFx4 -> CS HIGH). Считывается ID (CS LOW -> 0x40 -> CS HIGH -> MISO 0xX9).</text>
+  <text x="50" y="2290" class="note">• АЦП D22 и D23 сбрасываются (CS LOW -> 0xFFx4 -> CS HIGH). Считывается ID (CS LOW -> 0x43 -> CS HIGH -> MISO 0xX9).</text>
   <text x="50" y="2320" class="note">• Для каждого канала выполняется калибровка: CS LOW -> 0x10, 0x0010 (Config) -> CS HIGH; CS LOW -> 0x08, <tspan class="green-text">0x900F</tspan> (Zero-Scale + <tspan class="green-text">PSW ON</tspan>) -> CS HIGH; Ожидание RDY HIGH → LOW. <tspan class="red-text">Full-Scale Cal (0x8010) НЕ выполняется.</tspan></text>
-  <text x="50" y="2350" class="note">• После калибровки читаются <tspan class="highlight">Offset</tspan> (comm 0x46) и <tspan class="highlight">Full-Scale</tspan> (comm 0x47) и сохраняются в EEPROM.</text>
+  <text x="50" y="2350" class="note">• После калибровки читаются <tspan class="highlight">Offset</tspan> (comm 0x70) и <tspan class="highlight">Full-Scale</tspan> (comm 0x78) и сохраняются в EEPROM.</text>
 
   <text x="50" y="2400" class="note"><tspan class="highlight" font-size="16">3. Измерительный цикл (Super-cycle)</tspan></text>
   <text x="50" y="2430" class="note">• <tspan class="highlight">Начало (0 мс):</tspan> CS_1 LOW -> 0x10, 0x0010 (Config AIN1) -> CS_1 HIGH. CS_1 LOW -> 0x08, <tspan class="green-text">0x3000 (Mode: PSW_1 ON)</tspan> -> CS_1 HIGH. <tspan class="red-text">Пауза 5 мс (settling моста и входных цепей АЦП).</tspan> CS_1 LOW -> 0x08, 0x300A (Single Conv) -> CS_1 HIGH.</text>

@@ -24,6 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include "platform_tick.h"
 #include "periph_spi.h"
+#include "usb_ft232.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -351,7 +352,7 @@ void SPI1_IRQHandler(void)
 void USART1_IRQHandler(void)
 {
   /* USER CODE BEGIN USART1_IRQn 0 */
-
+	USB_FT232_IRQHandler();  // Передаем обработку в драйвер USB
   /* USER CODE END USART1_IRQn 0 */
   /* USER CODE BEGIN USART1_IRQn 1 */
 

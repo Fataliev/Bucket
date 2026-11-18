@@ -1,3 +1,4 @@
+"./App/Measurement/Src/measure_fsm.o"
 "./Application/User/Core/adc.o"
 "./Application/User/Core/dma.o"
 "./Application/User/Core/gpio.o"
@@ -32,3 +33,4 @@
 "./Platform/Src/periph_spi.o"
 "./Platform/Src/periph_usart.o"
 "./Platform/Src/platform_tick.o"
+"./Platform/Src/usb_ft232.o"

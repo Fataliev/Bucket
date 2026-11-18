@@ -17,5 +17,6 @@ void BSP_CS_PS09_Set(uint8_t state);
 // Управление питанием тензодатчика (PSW)
 void BSP_PSW_1_Set(uint8_t state);
 void BSP_PSW_2_Set(uint8_t state);
+void BSP_SW_ADC_Set(uint8_t state); // PB5: 0=D22(прямая), 1=D23(обратная)
 
 #endif // BSP_GPIO_H
