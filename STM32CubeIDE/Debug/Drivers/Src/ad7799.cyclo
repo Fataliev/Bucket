@@ -1,0 +1,9 @@
+stm32f1xx_ll_gpio.h:723:26:LL_GPIO_IsInputPinSet	1
+ad7799.c:11:13:AD7799_SelectCS	2
+ad7799.c:19:13:AD7799_SetIdleMode	1
+ad7799.c:28:6:AD7799_Reset	1
+ad7799.c:35:6:AD7799_Init	1
+ad7799.c:46:9:AD7799_CheckID	1
+ad7799.c:59:10:AD7799_ReadData	1
+ad7799.c:70:9:AD7799_WaitRDY	3
+ad7799.c:86:6:AD7799_ForceReset	3

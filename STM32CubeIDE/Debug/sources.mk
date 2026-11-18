@@ -26,5 +26,6 @@ Application/User/Core \
 Application/User/Startup \
 Drivers/CMSIS \
 Drivers/STM32F1xx_HAL_Driver \
+Drivers/Src \
 Platform/Src \
 

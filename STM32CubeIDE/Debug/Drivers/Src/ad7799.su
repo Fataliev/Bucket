@@ -1,0 +1,9 @@
+../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_gpio.h:723:26:LL_GPIO_IsInputPinSet	16	static
+../Drivers/Src/ad7799.c:11:13:AD7799_SelectCS	16	static
+../Drivers/Src/ad7799.c:19:13:AD7799_SetIdleMode	24	static
+../Drivers/Src/ad7799.c:28:6:AD7799_Reset	24	static
+../Drivers/Src/ad7799.c:35:6:AD7799_Init	16	static
+../Drivers/Src/ad7799.c:46:9:AD7799_CheckID	24	static
+../Drivers/Src/ad7799.c:59:10:AD7799_ReadData	24	static
+../Drivers/Src/ad7799.c:70:9:AD7799_WaitRDY	24	static
+../Drivers/Src/ad7799.c:86:6:AD7799_ForceReset	32	static

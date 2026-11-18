@@ -25,6 +25,8 @@
 "./Drivers/STM32F1xx_HAL_Driver/stm32f1xx_ll_tim.o"
 "./Drivers/STM32F1xx_HAL_Driver/stm32f1xx_ll_usart.o"
 "./Drivers/STM32F1xx_HAL_Driver/stm32f1xx_ll_utils.o"
+"./Drivers/Src/ad7799.o"
+"./Drivers/Src/adg888.o"
 "./Platform/Src/bsp_gpio.o"
 "./Platform/Src/onewire_uart.o"
 "./Platform/Src/periph_spi.o"

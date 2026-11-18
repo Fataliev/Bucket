@@ -34,6 +34,9 @@
 #include "bsp_gpio.h"
 #include "periph_spi.h"
 #include "periph_usart.h"
+#include "adg888.h"
+#include "ad7799.h"
+
 #include <stddef.h>
 /* USER CODE END Includes */
 
@@ -65,19 +68,122 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-static uint8_t spi_test_passed = 0;
-static uint8_t spi_tx_buf[4] = {0xAA, 0x55, 0x12, 0x34};
-static uint8_t spi_rx_buf[4] = {0};
+volatile uint8_t g_adc1_id = 0xFF;
+volatile uint8_t g_adc2_id = 0xFF;
+volatile uint32_t g_adc1_data = 0;
+volatile uint32_t g_adc2_data = 0;
+volatile uint8_t g_adc1_status = 0xFF;
+volatile uint8_t g_adc2_status = 0xFF;
 
-// Коллбэк, который вызовется после завершения передачи через прерывания
-void My_SPI_Callback(void *context, uint8_t *data, uint16_t len) {
-    // Проверяем, совпадают ли отправленные и принятые данные
-    if (data[0] == 0xAA && data[1] == 0x55 && data[2] == 0x12 && data[3] == 0x34) {
-        spi_test_passed = 1; // Тест пройден!
+/////////////////
+
+
+volatile uint8_t g_adc1_mode_h = 0xFF;
+volatile uint8_t g_adc1_mode_l = 0xFF;
+volatile uint8_t g_adc1_config_h = 0xFF;
+volatile uint8_t g_adc1_config_l = 0xFF;
+volatile uint8_t g_adc1_io = 0xFF;
+
+// Тестовая функция для последовательного опроса всех регистров
+void AD7799_Test(AD7799_Channel_t ch) {
+    uint8_t tx_buf[4];
+    uint8_t rx_buf[4];
+
+    // 1. Чтение Status Register
+    tx_buf[0] = 0x40;
+    tx_buf[1] = 0x00;
+    if (ch == AD7799_CH1) {
+        BSP_CS_ADC1_Set(0);
     } else {
-        spi_test_passed = 0; // Ошибка
+        BSP_CS_ADC2_Set(0);
+    }
+    SPI_TransmitReceive_Blocking(tx_buf, rx_buf, 2);
+    if (ch == AD7799_CH1) {
+        BSP_CS_ADC1_Set(1);
+        g_adc1_status = rx_buf[1];
+    } else {
+        BSP_CS_ADC2_Set(1);
+        g_adc2_status = rx_buf[1];
+    }
+
+    // Пауза 1 мс
+    for (volatile uint32_t i = 0; i < 72000; i++);
+
+    // 2. Чтение ID Register
+    tx_buf[0] = 0x44;
+    tx_buf[1] = 0x00;
+    if (ch == AD7799_CH1) {
+        BSP_CS_ADC1_Set(0);
+    } else {
+        BSP_CS_ADC2_Set(0);
+    }
+    SPI_TransmitReceive_Blocking(tx_buf, rx_buf, 2);
+    if (ch == AD7799_CH1) {
+        BSP_CS_ADC1_Set(1);
+        g_adc1_id = rx_buf[1];
+    } else {
+        BSP_CS_ADC2_Set(1);
+        g_adc2_id = rx_buf[1];
+    }
+
+    // Пауза 1 мс
+    for (volatile uint32_t i = 0; i < 72000; i++);
+
+    // 3. Чтение Mode Register (2 байта данных)
+    tx_buf[0] = 0x48;
+    tx_buf[1] = 0x00;
+    tx_buf[2] = 0x00;
+    if (ch == AD7799_CH1) {
+        BSP_CS_ADC1_Set(0);
+    } else {
+        BSP_CS_ADC2_Set(0);
+    }
+    SPI_TransmitReceive_Blocking(tx_buf, rx_buf, 3);
+    if (ch == AD7799_CH1) {
+        BSP_CS_ADC1_Set(1);
+        g_adc1_mode_h = rx_buf[1];
+        g_adc1_mode_l = rx_buf[2];
+    }
+
+    // Пауза 1 мс
+    for (volatile uint32_t i = 0; i < 72000; i++);
+
+    // 4. Чтение Config Register (2 байта данных)
+    tx_buf[0] = 0x50;
+    tx_buf[1] = 0x00;
+    tx_buf[2] = 0x00;
+    if (ch == AD7799_CH1) {
+        BSP_CS_ADC1_Set(0);
+    } else {
+        BSP_CS_ADC2_Set(0);
+    }
+    SPI_TransmitReceive_Blocking(tx_buf, rx_buf, 3);
+    if (ch == AD7799_CH1) {
+        BSP_CS_ADC1_Set(1);
+        g_adc1_config_h = rx_buf[1];
+        g_adc1_config_l = rx_buf[2];
+    }
+
+    // Пауза 1 мс
+    for (volatile uint32_t i = 0; i < 72000; i++);
+
+    // 5. Чтение I/O Register (1 байт данных)
+    tx_buf[0] = 0x68;
+    tx_buf[1] = 0x00;
+    if (ch == AD7799_CH1) {
+        BSP_CS_ADC1_Set(0);
+    } else {
+        BSP_CS_ADC2_Set(0);
+    }
+    SPI_TransmitReceive_Blocking(tx_buf, rx_buf, 2);
+    if (ch == AD7799_CH1) {
+        BSP_CS_ADC1_Set(1);
+        g_adc1_io = rx_buf[1];
     }
 }
+\
+
+
 /* USER CODE END 0 */
 
 /**
@@ -122,61 +228,67 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_ADC1_Init();
   MX_I2C1_Init();
   MX_RTC_Init();
   MX_SPI1_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
-  MX_DMA_Init();
+
   MX_USART3_UART_Init();
-  MX_IWDG_Init();
+ // MX_IWDG_Init();
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 
+
+  // Запускаем TIM3 для генерации прерываний каждую 1 мс
+  LL_TIM_EnableIT_UPDATE(TIM3);
+  LL_TIM_EnableCounter(TIM3);
+
+
    Platform_TickInit();
    SPI_Platform_Init();
    USART_Platform_Init();
+   ADG888_Init();
+   AD7799_Init();
 
-   // Запускаем TIM3 для генерации прерываний каждую 1 мс
-   LL_TIM_EnableIT_UPDATE(TIM3);
-   LL_TIM_EnableCounter(TIM3);
+   // ПРАВИЛЬНАЯ проверка ID (команда 0xC0)
+  // g_adc1_id = AD7799_CheckID(AD7799_CH1);  // Должно быть 0x0A
+  // g_adc2_id = AD7799_CheckID(AD7799_CH2);  // Должно быть 0x0A
 
+
+
+
+   uint32_t last_adc_test = GetTick();
    uint32_t last_spi_test = GetTick();
-   // Теперь безопасно читать тик
-    uint32_t last_led_toggle = GetTick();
-    BSP_LED_V16_Set(1); // Проверочное включение
+   uint32_t last_test = GetTick();
+
+
+
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
-  {
+  { // 1. КОРМЛЕНИЕ СТОРОЖЕВОГО ТАЙМЕРА (Критически важно!)
+	  LL_IWDG_ReloadCounter(IWDG);
 
-	  // Раз в 1000 мс запускаем тест SPI
-	       if ((uint32_t)(GetTick() - last_spi_test) >= 1000)
-	       {
-	           last_spi_test = GetTick();
+	  if ((uint32_t)(GetTick() - last_test) >= 2000) {
+	        last_test = GetTick();
+	        AD7799_Test(AD7799_CH1);
+	    }
 
-	           // Очищаем приемный буфер
-	           spi_rx_buf[0] = 0; spi_rx_buf[1] = 0; spi_rx_buf[2] = 0; spi_rx_buf[3] = 0;
-
-	           // Запускаем асинхронную передачу/прием (4 байта)
-	           // Передаем указатель на наш коллбэк
-	           SPI_TransmitReceive_IT(spi_tx_buf, spi_rx_buf, 4, My_SPI_Callback, NULL);
-	       }
-
-	       // Управляем светодиодом в зависимости от результата
-	       if (spi_test_passed) {
-	           BSP_LED_V16_Set(1); // Если данные прошли - светодиод горит
-	       } else {
-	           BSP_LED_V16_Toggle(); // Если ошибка или ожидание - мигает
-	           // Небольшая задержка, чтобы мигание было заметным
-	           for(volatile uint32_t i = 0; i < 100000; i++);
-	       }
+	    // Принимаем ID = 0x08 (AD7798) или 0x0A (AD7799)
+	    if ((g_adc1_id == 0x08 || g_adc1_id == 0x0A) &&
+	        (g_adc1_status == 0x08)) {
+	        BSP_LED_V16_Set(1);  // АЦП работает
+	    } else {
+	        BSP_LED_V16_Toggle();
+	    }
 
     /* USER CODE END WHILE */
 
