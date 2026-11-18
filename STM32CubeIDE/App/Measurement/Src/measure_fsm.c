@@ -1,106 +1,112 @@
 #include "measure_fsm.h"
 #include "ad7799.h"
-#include "bsp_gpio.h"
+#include "adg888.h"
 #include "platform_tick.h"
 
-#define MFSM_SETTLE_MS   5     // settling моста/АЦП (ТЗ п.3)
-#define MFSM_CONV_MS     480   // sinc3 @4.17 Гц
-#define MFSM_RDY_TMO     600   // таймаут RDY с запасом
+#define MEASURE_STEP_DURATION   480
+#define SWITCH_DELAY            15
+#define SETTLE_DELAY            5
 
-// Таблица 7 шагов (ТЗ п.2.2.1 + Прил.В). Прил.А ТЗ противоречит тексту —
-// gain выбран по схеме: вес=128, RTD=1, int.temp=1.
-static const MFSM_Step_t steps[7] = {
-    // M1 D22 int temp (bipolar, gain1)
-    {AD7799_CH1, 0, AD7799_CONF_BIPOLAR | AD7799_CONF_BUF | AD7799_CONF_GAIN(0) | AD7799_CH_INT_TEMP}, // 0x0017
-    // M2 D22 AIN3 (B8) unipolar gain1
-    {AD7799_CH1, 0, AD7799_CONF_UNIPOLAR | AD7799_CONF_BUF | AD7799_CONF_GAIN(0) | AD7799_CH_AIN3},    // 0x1012
-    // M3 D22 AIN2 (B6) unipolar gain1
-    {AD7799_CH1, 0, AD7799_CONF_UNIPOLAR | AD7799_CONF_BUF | AD7799_CONF_GAIN(0) | AD7799_CH_AIN2},    // 0x1011
-    // M4 D22 AIN1 (вес fwd) unipolar gain128
-    {AD7799_CH1, 0, AD7799_CONF_UNIPOLAR | AD7799_CONF_BUF | AD7799_CONF_GAIN(7) | AD7799_CH_AIN1},    // 0x1710
-    // M5 D23 AIN1 (вес rev) unipolar gain128, SW=HIGH
-    {AD7799_CH2, 1, AD7799_CONF_UNIPOLAR | AD7799_CONF_BUF | AD7799_CONF_GAIN(7) | AD7799_CH_AIN1},
-    // M6 D23 AIN2 (B7) unipolar gain1, SW=HIGH
-    {AD7799_CH2, 1, AD7799_CONF_UNIPOLAR | AD7799_CONF_BUF | AD7799_CONF_GAIN(0) | AD7799_CH_AIN2},
-    // M7 D23 int temp bipolar gain1, SW=HIGH
-    {AD7799_CH2, 1, AD7799_CONF_BIPOLAR | AD7799_CONF_BUF | AD7799_CONF_GAIN(0) | AD7799_CH_INT_TEMP},
-};
-
-volatile MFSM_State_t g_fsm_state = MFSM_IDLE;
-volatile uint8_t      g_fsm_step  = 0;
-volatile uint32_t     g_fsm_codes[7] = {0};
-volatile uint8_t      g_fsm_err = 0;
-static uint32_t step_t0 = 0;
-static uint8_t  running = 0;
+static MeasureState_t current_state = MEASURE_STATE_IDLE;
+static MeasureResult_t measure_result;
+static uint32_t step_start_time = 0;
+static uint8_t data_ready = 0;
+static uint8_t current_step = 0;
 
 void MeasureFSM_Init(void) {
-    g_fsm_state = MFSM_IDLE;
-    g_fsm_step = 0;
-    g_fsm_err = 0;
-    running = 0;
-    BSP_SW_ADC_Set(0); // безопасное состояние (ТЗ п.2.2.2)
-}
-
-void MeasureFSM_Start(void) {
-    if (g_fsm_state == MFSM_IDLE) {
-        g_fsm_step = 0;
-        g_fsm_err = 0;
-        running = 1;
-    }
+    current_state = MEASURE_STATE_IDLE;
+    data_ready = 0;
+    current_step = 0;
+    AD7799_Init();
+    ADG888_Init(); // Убедитесь, что ADG888_Init() существует в adg888.c
 }
 
 void MeasureFSM_Task(void) {
-    if (!running) return;
+    uint32_t current_time = GetTick();
+    uint32_t elapsed = current_time - step_start_time;
 
-    const MFSM_Step_t *s = &steps[g_fsm_step];
-
-    switch (g_fsm_state) {
-    case MFSM_IDLE:
-        // вход в шаг: эксклюзивность PSW при переходе D22->D23 (ТЗ п.3)
-        if (g_fsm_step == 4) {
-            AD7799_PowerOff(AD7799_CH1);          // PSW_1 OFF
-            step_t0 = GetTick();
-            while ((uint32_t)(GetTick() - step_t0) < 10); // пауза 10 мс
-        }
-        BSP_SW_ADC_Set(s->sw_adc);
-        // старт конверсии (Config + Mode + settle)
-        AD7799_StartConversion(s->ch, s->config, MFSM_SETTLE_MS);
-        step_t0 = GetTick();
-        g_fsm_state = MFSM_WAIT_RDY;
-        break;
-
-    case MFSM_WAIT_RDY:
-        if (AD7799_WaitRDY(s->ch, MFSM_RDY_TMO)) {
-            g_fsm_state = MFSM_READ;
-        } else {
-            g_fsm_err |= (1 << g_fsm_step); // таймаут RDY
-            g_fsm_state = MFSM_NEXT;
-        }
-        break;
-
-    case MFSM_READ:
-        g_fsm_codes[g_fsm_step] = AD7799_ReadData(s->ch);
-        g_fsm_state = MFSM_NEXT;
-        break;
-
-    case MFSM_NEXT:
-        if (g_fsm_step < 6) {
-            g_fsm_step++;
-            g_fsm_state = MFSM_IDLE;
-        } else {
-            // завершение цикла: PSW_2 OFF
-            AD7799_PowerOff(AD7799_CH2);
-            g_fsm_state = MFSM_DONE;
-            running = 0;
-        }
-        break;
-
-    case MFSM_DONE:
-        g_fsm_state = MFSM_IDLE;
-        break;
-
-    default:
-        g_fsm_state = MFSM_IDLE;
-        break;
+    if (current_state == MEASURE_STATE_IDLE) {
+        current_step = 0;
+        current_state = MEASURE_STATE_M1;
+        step_start_time = current_time;
+        AD7799_WriteMode(AD7799_CH1, 0x3000); // PSW ON
+        return;
     }
+
+    // Массив конфигураций для шагов
+    static const struct {
+        AD7799_Channel_t ch;
+        uint16_t config;
+    } steps[] = {
+        {AD7799_CH1, AD7799_CONF_CH_INT_TEMP | AD7799_CONF_BUF_ON | AD7799_CONF_GAIN(0)},
+        {AD7799_CH1, AD7799_CONF_CH_AIN3 | AD7799_CONF_BUF_ON | AD7799_CONF_GAIN(0)},
+        {AD7799_CH1, AD7799_CONF_CH_AIN2 | AD7799_CONF_BUF_ON | AD7799_CONF_GAIN(0)},
+        {AD7799_CH1, AD7799_CONF_CH_AIN1 | AD7799_CONF_BUF_ON | AD7799_CONF_GAIN(7)},
+        {AD7799_CH2, AD7799_CONF_CH_AIN1 | AD7799_CONF_BUF_ON | AD7799_CONF_GAIN(7)},
+        {AD7799_CH2, AD7799_CONF_CH_AIN2 | AD7799_CONF_BUF_ON | AD7799_CONF_GAIN(0)},
+        {AD7799_CH2, AD7799_CONF_CH_INT_TEMP | AD7799_CONF_BUF_ON | AD7799_CONF_GAIN(0)}
+    };
+
+    if (current_step < 7) {
+        if (elapsed >= MEASURE_STEP_DURATION) {
+            // Запуск конверсии
+            AD7799_WriteConfig(steps[current_step].ch, steps[current_step].config);
+            AD7799_WriteMode(steps[current_step].ch, 0x300F); // Single + PSW ON + 4.17Hz
+
+            if (AD7799_WaitRDY(steps[current_step].ch, 600)) {
+                uint32_t raw_data = AD7799_ReadData(steps[current_step].ch);
+
+                switch(current_step) {
+                    case 0: measure_result.d22_temp = (int32_t)raw_data; break;
+                    case 1: measure_result.d22_b8 = (int32_t)raw_data; break;
+                    case 2: measure_result.d22_b6 = (int32_t)raw_data; break;
+                    case 3: measure_result.w_fwd = (int32_t)raw_data; break;
+                    case 4: measure_result.w_rev = (int32_t)raw_data; break;
+                    case 5: measure_result.d23_b7 = (int32_t)raw_data; break;
+                    case 6: measure_result.d23_temp = (int32_t)raw_data; break;
+                }
+            }
+
+            current_step++;
+            step_start_time = GetTick();
+
+            // Логика переключения между D22 и D23 (после шага 3, перед шагом 4)
+            if (current_step == 4) {
+                AD7799_WriteMode(AD7799_CH1, 0x400F); // D22 OFF
+                // ADG888_Reverse(); // Раскомментируйте, когда реализуете adg888.c
+                AD7799_WriteMode(AD7799_CH2, 0x3000); // D23 PSW ON
+
+                // Settling 5 мс
+                uint32_t t_settle = GetTick();
+                while ((GetTick() - t_settle) < SETTLE_DELAY);
+                step_start_time = GetTick();
+            }
+        }
+    } else {
+        // Завершение цикла
+        AD7799_WriteMode(AD7799_CH2, 0x400F); // D23 OFF
+        // ADG888_Forward(); // Раскомментируйте, когда реализуете adg888.c
+
+        measure_result.timestamp = GetTick();
+        data_ready = 1;
+        current_state = MEASURE_STATE_COMPLETE;
+    }
+}
+
+MeasureResult_t MeasureFSM_GetResult(void) {
+    return measure_result;
+}
+
+uint8_t MeasureFSM_IsDataReady(void) {
+    if (data_ready) {
+        data_ready = 0;
+        return 1;
+    }
+    return 0;
+}
+
+void MeasureFSM_Reset(void) {
+    current_state = MEASURE_STATE_IDLE;
+    data_ready = 0;
+    current_step = 0;
 }

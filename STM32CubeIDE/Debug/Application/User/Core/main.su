@@ -31,6 +31,6 @@
 ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_tim.h:1063:22:LL_TIM_EnableCounter	16	static
 ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_tim.h:3267:22:LL_TIM_EnableIT_UPDATE	16	static
 ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_gpio.h:1565:22:LL_GPIO_AF_Remap_SWJ_NOJTAG	4	static
-C:/Users/user/Documents/GitHub/Bucket/Core/Src/main.c:80:5:main	48	static
-C:/Users/user/Documents/GitHub/Bucket/Core/Src/main.c:208:6:SystemClock_Config	8	static
-C:/Users/user/Documents/GitHub/Bucket/Core/Src/main.c:277:6:Error_Handler	4	static,ignoring_inline_asm
+C:/Users/user/Documents/GitHub/Bucket/Core/Src/main.c:92:5:main	720	static
+C:/Users/user/Documents/GitHub/Bucket/Core/Src/main.c:261:6:SystemClock_Config	8	static
+C:/Users/user/Documents/GitHub/Bucket/Core/Src/main.c:330:6:Error_Handler	4	static,ignoring_inline_asm

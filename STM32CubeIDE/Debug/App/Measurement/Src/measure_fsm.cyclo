@@ -1,3 +1,5 @@
-measure_fsm.c:36:6:MeasureFSM_Init	1
-measure_fsm.c:44:6:MeasureFSM_Start	2
-measure_fsm.c:52:6:MeasureFSM_Task	11
+measure_fsm.c:16:6:MeasureFSM_Init	1
+measure_fsm.c:24:6:MeasureFSM_Task	14
+measure_fsm.c:96:17:MeasureFSM_GetResult	1
+measure_fsm.c:100:9:MeasureFSM_IsDataReady	2
+measure_fsm.c:108:6:MeasureFSM_Reset	1

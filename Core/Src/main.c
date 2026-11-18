@@ -40,6 +40,7 @@
 #include "usb_ft232.h"
 
 #include <stddef.h>
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,7 +60,12 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+volatile uint8_t g_adc1_id = 0xFF;
+volatile uint8_t g_adc2_id = 0xFF;
+volatile MeasureResult_t g_measure_result; // <-- Теперь тип известен компилятору
+volatile uint8_t g_measurement_complete = 0;
+static uint8_t g_current_adc = 0;
+static uint32_t last_usb_test = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -70,6 +76,12 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+#include "usb_ft232.h"
+
+
+volatile uint32_t g_adc1_data = 0;
+volatile uint32_t g_adc2_data = 0;
+
 
 /* USER CODE END 0 */
 
@@ -138,32 +150,29 @@ int main(void)
 
    Platform_TickInit();
    SPI_Platform_Init();
+   USART_Platform_Init();
 
    // Инициализация USB
    USB_FT232_Init();
-   USB_FT232_SendString("=== Bucket System Started ===\r\n");
-   USB_FT232_Printf("System tick: %lu ms\r\n", GetTick());
+   USB_FT232_SendString("\r\n=== Bucket ADC Test Started ===\r\n");
+   last_usb_test = GetTick();
 
 
-   USART_Platform_Init();
    ADG888_Init();
    AD7799_Init();
-   MeasureFSM_Init();
+  // MeasureFSM_Init();// Внутри уже вызывается AD7799_Init и определяется тип
 
-   // do_calib=0 на отладке (быстрый старт); =1 для полной калибровки
-  //AD7799_Init(0);
-   //g_adc1_id = AD7799_ReadID(AD7799_CH1);
-  // g_adc2_id = AD7799_ReadID(AD7799_CH2);
+   // Тестовая проверка ID
+   g_adc1_id = AD7799_CheckID(AD7799_CH1);
+   g_adc2_id = AD7799_CheckID(AD7799_CH2);
 
+   USB_FT232_SendString("\r\n=== Bucket ADC Test Started ===\r\n");
+   USB_FT232_SendString("Press any key to stop...\r\n\r\n");
 
-   uint32_t last_diag = GetTick();
-   uint32_t last_usb_test = GetTick();
-   uint32_t last_adc_test = GetTick();
-   //uint32_t last_spi_test = GetTick();
-  // uint32_t last_test = GetTick();
-   //uint32_t last_cycle = GetTick();
+   last_usb_test = GetTick();
+   BSP_LED_V16_Set(1);
 
-
+   //AD7799_RunFullTest();
 
   /* USER CODE END 2 */
 
@@ -173,26 +182,70 @@ int main(void)
   { // 1. КОРМЛЕНИЕ СТОРОЖЕВОГО ТАЙМЕРА (Критически важно!)
 	  LL_IWDG_ReloadCounter(IWDG);
 
-	    if ((uint32_t)(GetTick() - last_diag) >= 1000) {
-	        last_diag = GetTick();
+	    if ((uint32_t)(GetTick() - last_usb_test) >= 1000)
+	    {
+	        last_usb_test = GetTick();
 
-	        uint8_t  st  = AD7799_ReadStatus(AD7799_CH1);
-	        uint8_t  id  = AD7799_CheckID(AD7799_CH1);
-	        uint16_t md  = AD7799_ReadMode(AD7799_CH1);
-	        uint16_t cf  = AD7799_ReadConfig(AD7799_CH1);
-	        uint8_t  id2 = AD7799_CheckID(AD7799_CH2);
+	        AD7799_Channel_t ch = (g_current_adc == 0) ? AD7799_CH1 : AD7799_CH2;
+	        uint8_t ch_num = g_current_adc + 1;
 
-	        USB_FT232_Printf("CH1: ID=0x%02X ST=0x%02X MODE=0x%04X CFG=0x%04X | CH2 ID=0x%02X\r\n",
-	                         id, st, md, cf, id2);
+	        // Чтение регистров
+	        uint8_t  id     = AD7799_CheckID(ch);
+	        uint8_t  status = AD7799_ReadStatus(ch);
+	        uint16_t mode   = AD7799_ReadMode(ch);
+	        uint16_t config = AD7799_ReadConfig(ch);
+	        uint8_t  io     = AD7799_ReadIO(ch);
 
-	        if ((id == AD7799_ID_AD7799 || id == AD7799_ID_AD7798) &&
-	            (id2 == AD7799_ID_AD7799 || id2 == AD7799_ID_AD7798)) {
-	            BSP_LED_V16_Set(1);
-	        } else {
-	            BSP_LED_V16_Toggle();
-	        }
+	        // Чтение всех каналов (каждый запуск изменяет состояние АЦП)
+	        uint32_t data_ain1 = AD7799_ReadChannel(ch, AD7799_CONF_BIPOLAR | AD7799_CONF_BUF_ON | AD7799_CONF_GAIN(7) | AD7799_CONF_CH_AIN1);
+	        uint32_t data_ain2 = AD7799_ReadChannel(ch, AD7799_CONF_UNIPOLAR | AD7799_CONF_BUF_ON | AD7799_CONF_GAIN(0) | AD7799_CONF_CH_AIN2);
+	        uint32_t data_ain3 = AD7799_ReadChannel(ch, AD7799_CONF_UNIPOLAR | AD7799_CONF_BUF_ON | AD7799_CONF_GAIN(0) | AD7799_CONF_CH_AIN3);
+	        uint32_t data_temp = AD7799_ReadChannel(ch, AD7799_CONF_BIPOLAR | AD7799_CONF_BUF_ON | AD7799_CONF_GAIN(0) | AD7799_CONF_CH_INT_TEMP);
 
-	}
+	        // Формируем строку
+	        char buf[512];
+	        snprintf(buf, sizeof(buf),
+	            "\r\n========== ADC CH%d (t=%lu ms) ==========\r\n"
+	            "  ID     = 0x%02X  (%s)\r\n"
+	            "  Status = 0x%02X  [RDY=%d, ERR=%d, NOREF=%d]\r\n"
+	            "  Mode   = 0x%04X  [MD=%d, PSW=%d, FS=0x%X]\r\n"
+	            "  Config = 0x%04X  [U/B=%d, G=%d, BUF=%d, CH=%d]\r\n"
+	            "  IO     = 0x%02X\r\n"
+	            "  -------------------------------------------\r\n"
+	            "  CH_AIN1 (G=128, Bipolar) = 0x%06lX  (%lu)\r\n"
+	            "  CH_AIN2 (G=1,   Unipolar)= 0x%06lX  (%lu)\r\n"
+	            "  CH_AIN3 (G=1,   Unipolar)= 0x%06lX  (%lu)\r\n"
+	            "  CH_TEMP (G=1,   Bipolar) = 0x%06lX  (%lu)\r\n"
+	            "=============================================\r\n",
+	            ch_num,
+	            (unsigned long)GetTick(),
+	            id,
+	            (id == 0x0A) ? "AD7799" : (id == 0x08) ? "AD7798" : "UNKNOWN",
+	            status,
+	            (status >> 7) & 1,
+	            (status >> 6) & 1,
+	            (status >> 5) & 1,
+	            mode,
+	            (mode >> 13) & 7,
+	            (mode >> 12) & 1,
+	            mode & 0x0F,
+	            config,
+	            (config >> 12) & 1,
+	            (config >> 8) & 7,
+	            (config >> 4) & 1,
+	            config & 0x07,
+	            io,
+	            (unsigned long)data_ain1, (unsigned long)data_ain1,
+	            (unsigned long)data_ain2, (unsigned long)data_ain2,
+	            (unsigned long)data_ain3, (unsigned long)data_ain3,
+	            (unsigned long)data_temp, (unsigned long)data_temp
+	        );
+
+	        USB_FT232_SendString(buf);
+
+	        // Переключаемся на другой канал
+	        g_current_adc = 1 - g_current_adc;
+	    }
 
     /* USER CODE END WHILE */
 

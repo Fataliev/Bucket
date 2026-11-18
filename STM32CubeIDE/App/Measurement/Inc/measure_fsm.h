@@ -1,31 +1,40 @@
 #ifndef MEASURE_FSM_H
 #define MEASURE_FSM_H
 
+#include "main.h"
 #include <stdint.h>
-#include "ad7799.h"
 
+// Состояния конечного автомата
 typedef enum {
-    MFSM_IDLE = 0,
-    MFSM_SETTLE,    // ждём settle после старта
-    MFSM_WAIT_RDY,  // ждём RDY low
-    MFSM_READ,      // читаем 24 бита
-    MFSM_NEXT,      // переход к следующему шагу
-    MFSM_DONE       // цикл завершён
-} MFSM_State_t;
+    MEASURE_STATE_IDLE = 0,
+    MEASURE_STATE_M1,   // D22 Internal Temp
+    MEASURE_STATE_M2,   // D22 B8
+    MEASURE_STATE_M3,   // D22 B6
+    MEASURE_STATE_M4,   // D22 AIN1 (W_fwd)
+    MEASURE_STATE_SWITCH, // Переключение на D23
+    MEASURE_STATE_M5,   // D23 AIN1 (W_rev)
+    MEASURE_STATE_M6,   // D23 B7
+    MEASURE_STATE_M7,   // D23 Internal Temp
+    MEASURE_STATE_COMPLETE
+} MeasureState_t;
 
+// Структура результатов измерения
 typedef struct {
-    AD7799_Channel_t ch;     // D22/D23
-    uint8_t  sw_adc;         // уровень PB5
-    uint16_t config;         // Config Register
-} MFSM_Step_t;
+    int32_t d22_temp;
+    int32_t d22_b8;
+    int32_t d22_b6;
+    int32_t w_fwd;
+    int32_t w_rev;
+    int32_t d23_b7;
+    int32_t d23_temp;
+    uint32_t timestamp;
+} MeasureResult_t;
 
+// Прототипы функций
 void MeasureFSM_Init(void);
-void MeasureFSM_Task(void);   // вызывать в main loop
-void MeasureFSM_Start(void);  // запустить один super-cycle
+void MeasureFSM_Task(void);
+MeasureResult_t MeasureFSM_GetResult(void);
+uint8_t MeasureFSM_IsDataReady(void);
+void MeasureFSM_Reset(void);
 
-extern volatile MFSM_State_t g_fsm_state;
-extern volatile uint8_t      g_fsm_step;
-extern volatile uint32_t     g_fsm_codes[7]; // сырые коды M1..M7
-extern volatile uint8_t      g_fsm_err;      // биты ошибок шага
-
-#endif
+#endif // MEASURE_FSM_H
