@@ -13,6 +13,6 @@
 ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_spi.h:1054:22:LL_SPI_TransmitData8	24	static
 ../Platform/Src/periph_spi.c:13:6:SPI_Platform_Init	4	static
 ../Platform/Src/periph_spi.c:20:6:SPI_TransmitReceive_Blocking	40	static
-../Platform/Src/periph_spi.c:35:9:SPI_TransmitReceive_IT	24	static
-../Platform/Src/periph_spi.c:58:9:SPI_IsBusy	4	static
-../Platform/Src/periph_spi.c:62:6:SPI_IRQ_Handler	16	static
+../Platform/Src/periph_spi.c:47:9:SPI_TransmitReceive_IT	24	static
+../Platform/Src/periph_spi.c:70:9:SPI_IsBusy	4	static
+../Platform/Src/periph_spi.c:74:6:SPI_IRQ_Handler	16	static

@@ -66,6 +66,15 @@ volatile MeasureResult_t g_measure_result; // <-- Теперь тип извес
 volatile uint8_t g_measurement_complete = 0;
 static uint8_t g_current_adc = 0;
 static uint32_t last_usb_test = 0;
+static uint32_t  last_adc_test=0;
+
+/////////////////
+
+uint32_t raw;
+uint16_t mode, cfg;
+uint8_t  st;
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -154,98 +163,129 @@ int main(void)
 
    // Инициализация USB
    USB_FT232_Init();
-   USB_FT232_SendString("\r\n=== Bucket ADC Test Started ===\r\n");
    last_usb_test = GetTick();
 
 
    ADG888_Init();
-   AD7799_Init();
-  // MeasureFSM_Init();// Внутри уже вызывается AD7799_Init и определяется тип
+   //AD7799_Init();
+  MeasureFSM_Init();// Внутри уже вызывается AD7799_Init и определяется тип
 
-   // Тестовая проверка ID
-   g_adc1_id = AD7799_CheckID(AD7799_CH1);
-   g_adc2_id = AD7799_CheckID(AD7799_CH2);
+  /* Все CS шины SPI1 в неактивное состояние ДО первого обмена */
+  BSP_CS_ADC1_Set(1);
+  BSP_CS_ADC2_Set(1);
+  BSP_CS_FLASH_Set(1);
+  BSP_CS_PS09_Set(1);
 
-   USB_FT232_SendString("\r\n=== Bucket ADC Test Started ===\r\n");
-   USB_FT232_SendString("Press any key to stop...\r\n\r\n");
 
-   last_usb_test = GetTick();
-   BSP_LED_V16_Set(1);
 
-   //AD7799_RunFullTest();
+  /* Стартовый дамп регистров: ID + калибровочные коэффициенты */
+    g_adc1_id = AD7799_ReadID(AD7799_DEV_1);
+    g_adc2_id = AD7799_ReadID(AD7799_DEV_2);
+    USB_FT232_Printf("D22 ID=0x%02X (%s)  OFFSET=0x%06lX FS=0x%06lX\r\n",
+                     g_adc1_id,
+                     ((g_adc1_id & 0x0F) == 0x09) ? "AD7799" :
+                     ((g_adc1_id & 0x0F) == 0x08) ? "AD7798!" : "NO CHIP",
+                     (unsigned long)AD7799_ReadOffset(AD7799_DEV_1),
+                     (unsigned long)AD7799_ReadFullScale(AD7799_DEV_1));
+    USB_FT232_Printf("D23 ID=0x%02X (%s)  OFFSET=0x%06lX FS=0x%06lX\r\n",
+                     g_adc2_id,
+                     ((g_adc2_id & 0x0F) == 0x09) ? "AD7799" :
+                     ((g_adc2_id & 0x0F) == 0x08) ? "AD7798!" : "NO CHIP",
+                     (unsigned long)AD7799_ReadOffset(AD7799_DEV_2),
+                     (unsigned long)AD7799_ReadFullScale(AD7799_DEV_2));
+    USB_FT232_SendString("ST: bit7=RDY(1=busy) bit6=ERR bit5=NOREF bit2..0=CH\r\n");
+    USB_FT232_SendString("FS=0x0F -> 4.17 Hz, tSETTLE=480 ms; cycle ~3.5 s\r\n");
+
+    last_adc_test = GetTick();
+    last_usb_test = GetTick();
+    BSP_LED_V16_Set(1);
+
+
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  { // 1. КОРМЛЕНИЕ СТОРОЖЕВОГО ТАЙМЕРА (Критически важно!)
-	  LL_IWDG_ReloadCounter(IWDG);
 
-	    if ((uint32_t)(GetTick() - last_usb_test) >= 1000)
-	    {
-	        last_usb_test = GetTick();
+   while (1)
+   {
+       // 1. КОРМЛЕНИЕ СТОРОЖЕВОГО ТАЙМЕРА (Критически важно!)
+       //LL_IWDG_ReloadCounter(IWDG);
 
-	        AD7799_Channel_t ch = (g_current_adc == 0) ? AD7799_CH1 : AD7799_CH2;
-	        uint8_t ch_num = g_current_adc + 1;
+       if ((uint32_t)(GetTick() - last_adc_test) >= 1000)
+       {
+         last_adc_test = GetTick();
+         BSP_LED_V16_Toggle();
 
-	        // Чтение регистров
-	        uint8_t  id     = AD7799_CheckID(ch);
-	        uint8_t  status = AD7799_ReadStatus(ch);
-	        uint16_t mode   = AD7799_ReadMode(ch);
-	        uint16_t config = AD7799_ReadConfig(ch);
-	        uint8_t  io     = AD7799_ReadIO(ch);
+         USB_FT232_Printf("\r\n--- t=%lu ms ---\r\n", (unsigned long)GetTick());
 
-	        // Чтение всех каналов (каждый запуск изменяет состояние АЦП)
-	        uint32_t data_ain1 = AD7799_ReadChannel(ch, AD7799_CONF_BIPOLAR | AD7799_CONF_BUF_ON | AD7799_CONF_GAIN(7) | AD7799_CONF_CH_AIN1);
-	        uint32_t data_ain2 = AD7799_ReadChannel(ch, AD7799_CONF_UNIPOLAR | AD7799_CONF_BUF_ON | AD7799_CONF_GAIN(0) | AD7799_CONF_CH_AIN2);
-	        uint32_t data_ain3 = AD7799_ReadChannel(ch, AD7799_CONF_UNIPOLAR | AD7799_CONF_BUF_ON | AD7799_CONF_GAIN(0) | AD7799_CONF_CH_AIN3);
-	        uint32_t data_temp = AD7799_ReadChannel(ch, AD7799_CONF_BIPOLAR | AD7799_CONF_BUF_ON | AD7799_CONF_GAIN(0) | AD7799_CONF_CH_INT_TEMP);
+         /* ---------------- D22: служебные регистры ---------------- */
+         g_adc1_id = AD7799_ReadID(AD7799_DEV_1);
+         st        = AD7799_ReadStatus(AD7799_DEV_1);
+         mode      = AD7799_ReadMode(AD7799_DEV_1);
+         cfg       = AD7799_ReadConfig(AD7799_DEV_1);
+         USB_FT232_Printf("D22 ID=%02X ST=%02X MODE=%04X CFG=%04X IO=%02X\r\n",
+                          g_adc1_id, st, mode, cfg, AD7799_ReadIO(AD7799_DEV_1));
 
-	        // Формируем строку
-	        char buf[512];
-	        snprintf(buf, sizeof(buf),
-	            "\r\n========== ADC CH%d (t=%lu ms) ==========\r\n"
-	            "  ID     = 0x%02X  (%s)\r\n"
-	            "  Status = 0x%02X  [RDY=%d, ERR=%d, NOREF=%d]\r\n"
-	            "  Mode   = 0x%04X  [MD=%d, PSW=%d, FS=0x%X]\r\n"
-	            "  Config = 0x%04X  [U/B=%d, G=%d, BUF=%d, CH=%d]\r\n"
-	            "  IO     = 0x%02X\r\n"
-	            "  -------------------------------------------\r\n"
-	            "  CH_AIN1 (G=128, Bipolar) = 0x%06lX  (%lu)\r\n"
-	            "  CH_AIN2 (G=1,   Unipolar)= 0x%06lX  (%lu)\r\n"
-	            "  CH_AIN3 (G=1,   Unipolar)= 0x%06lX  (%lu)\r\n"
-	            "  CH_TEMP (G=1,   Bipolar) = 0x%06lX  (%lu)\r\n"
-	            "=============================================\r\n",
-	            ch_num,
-	            (unsigned long)GetTick(),
-	            id,
-	            (id == 0x0A) ? "AD7799" : (id == 0x08) ? "AD7798" : "UNKNOWN",
-	            status,
-	            (status >> 7) & 1,
-	            (status >> 6) & 1,
-	            (status >> 5) & 1,
-	            mode,
-	            (mode >> 13) & 7,
-	            (mode >> 12) & 1,
-	            mode & 0x0F,
-	            config,
-	            (config >> 12) & 1,
-	            (config >> 8) & 7,
-	            (config >> 4) & 1,
-	            config & 0x07,
-	            io,
-	            (unsigned long)data_ain1, (unsigned long)data_ain1,
-	            (unsigned long)data_ain2, (unsigned long)data_ain2,
-	            (unsigned long)data_ain3, (unsigned long)data_ain3,
-	            (unsigned long)data_temp, (unsigned long)data_temp
-	        );
+         /* D22 AIN1: тензомост, bipolar, G=128 */
+         g_adc1_data = AD7799_MeasureChannel(AD7799_DEV_1,
+                         AD7799_CONF_BIPOLAR | AD7799_CONF_BUF |
+                         AD7799_CONF_GAIN(7)   | AD7799_CONF_CH_AIN1);
+         st = AD7799_ReadStatus(AD7799_DEV_1);
+         USB_FT232_Printf("D22 AIN1 W  G128 B: %06lX %s ST=%02X\r\n",
+                          (unsigned long)g_adc1_data,
+                          (g_adc1_data == 0xFFFFFFFFUL) ? "RDY-TIMEOUT" : "ok", st);
 
-	        USB_FT232_SendString(buf);
+         /* D22 AIN2: RTD B6, unipolar, G=1 */
+         raw = AD7799_MeasureChannel(AD7799_DEV_1,
+                 AD7799_CONF_UNIPOLAR | AD7799_CONF_BUF |
+                 AD7799_CONF_GAIN(0)    | AD7799_CONF_CH_AIN2);
+         USB_FT232_Printf("D22 AIN2 B6 G1  U: %06lX %s\r\n",
+                          (unsigned long)raw,
+                          (raw == 0xFFFFFFFFUL) ? "RDY-TIMEOUT" : "ok");
 
-	        // Переключаемся на другой канал
-	        g_current_adc = 1 - g_current_adc;
-	    }
+         /* D22 AIN3: RTD B8, unipolar, G=1 */
+         raw = AD7799_MeasureChannel(AD7799_DEV_1,
+                 AD7799_CONF_UNIPOLAR | AD7799_CONF_BUF |
+                 AD7799_CONF_GAIN(0)    | AD7799_CONF_CH_AIN3);
+         USB_FT232_Printf("D22 AIN3 B8 G1  U: %06lX %s\r\n",
+                          (unsigned long)raw,
+                          (raw == 0xFFFFFFFFUL) ? "RDY-TIMEOUT" : "ok");
+
+         /* D22 CH=7: это AVDD MONITOR (gain=1/6, внутр. ИОН 1.17 В), НЕ температура */
+         raw = AD7799_MeasureChannel(AD7799_DEV_1,
+                 AD7799_CONF_UNIPOLAR | AD7799_CONF_CH_INT_TEMP);
+         USB_FT232_Printf("D22 AVDDMON      : %06lX %s\r\n",
+                          (unsigned long)raw,
+                          (raw == 0xFFFFFFFFUL) ? "RDY-TIMEOUT" : "ok");
+
+         /* ---------------- D23: служебные регистры ---------------- */
+         g_adc2_id = AD7799_ReadID(AD7799_DEV_2);
+         st        = AD7799_ReadStatus(AD7799_DEV_2);
+         mode      = AD7799_ReadMode(AD7799_DEV_2);
+         cfg       = AD7799_ReadConfig(AD7799_DEV_2);
+         USB_FT232_Printf("D23 ID=%02X ST=%02X MODE=%04X CFG=%04X IO=%02X\r\n",
+                          g_adc2_id, st, mode, cfg, AD7799_ReadIO(AD7799_DEV_2));
+
+         /* D23 AIN1: тензомост (обратная полярность), bipolar, G=128 */
+         g_adc2_data = AD7799_MeasureChannel(AD7799_DEV_2,
+                         AD7799_CONF_BIPOLAR | AD7799_CONF_BUF |
+                         AD7799_CONF_GAIN(7)   | AD7799_CONF_CH_AIN1);
+         st = AD7799_ReadStatus(AD7799_DEV_2);
+         USB_FT232_Printf("D23 AIN1 W  G128 B: %06lX %s ST=%02X\r\n",
+                          (unsigned long)g_adc2_data,
+                          (g_adc2_data == 0xFFFFFFFFUL) ? "RDY-TIMEOUT" : "ok", st);
+
+         /* D23 AIN2: RTD B7, unipolar, G=1. AIN3 у D23 не подключён */
+         raw = AD7799_MeasureChannel(AD7799_DEV_2,
+                 AD7799_CONF_UNIPOLAR | AD7799_CONF_BUF |
+                 AD7799_CONF_GAIN(0)    | AD7799_CONF_CH_AIN2);
+         USB_FT232_Printf("D23 AIN2 B7 G1  U: %06lX %s\r\n",
+                          (unsigned long)raw,
+                          (raw == 0xFFFFFFFFUL) ? "RDY-TIMEOUT" : "ok");
+
+         USB_FT232_Printf("--- done, t=%lu ms ---\r\n", (unsigned long)GetTick());
+       }
 
     /* USER CODE END WHILE */
 
@@ -253,6 +293,7 @@ int main(void)
   }
   /* USER CODE END 3 */
 }
+
 
 /**
   * @brief System Clock Configuration

@@ -12,7 +12,7 @@ stm32f1xx_ll_spi.h:894:22:LL_SPI_DisableIT_TXE	1
 stm32f1xx_ll_spi.h:1031:25:LL_SPI_ReceiveData8	1
 stm32f1xx_ll_spi.h:1054:22:LL_SPI_TransmitData8	1
 periph_spi.c:13:6:SPI_Platform_Init	1
-periph_spi.c:20:6:SPI_TransmitReceive_Blocking	7
-periph_spi.c:35:9:SPI_TransmitReceive_IT	2
-periph_spi.c:58:9:SPI_IsBusy	1
-periph_spi.c:62:6:SPI_IRQ_Handler	11
+periph_spi.c:20:6:SPI_TransmitReceive_Blocking	10
+periph_spi.c:47:9:SPI_TransmitReceive_IT	2
+periph_spi.c:70:9:SPI_IsBusy	1
+periph_spi.c:74:6:SPI_IRQ_Handler	11
