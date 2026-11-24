@@ -1,4 +1,5 @@
 #include "periph_spi.h"
+#include "platform_tick.h"
 #include <stddef.h>
 
 static volatile uint8_t spi_busy = 0;

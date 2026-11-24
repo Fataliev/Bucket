@@ -1,5 +1,6 @@
 App/Measurement/Src/measure_fsm.o: ../App/Measurement/Src/measure_fsm.c \
  ../../STM32CubeIDE/App/Measurement/Inc/measure_fsm.h \
+ C:/Users/user/Documents/GitHub/Bucket/STM32CubeIDE/Drivers/Inc/ad7799.h \
  ../../Core/Inc/main.h \
  ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_adc.h \
  ../../Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f1xx.h \
@@ -24,10 +25,11 @@ App/Measurement/Src/measure_fsm.o: ../App/Measurement/Src/measure_fsm.c \
  ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_tim.h \
  ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_usart.h \
  ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_gpio.h \
- C:/Users/user/Documents/GitHub/Bucket/STM32CubeIDE/Drivers/Inc/ad7799.h \
  C:/Users/user/Documents/GitHub/Bucket/STM32CubeIDE/Drivers/Inc/adg888.h \
+ ../../STM32CubeIDE/Platform/Inc/bsp_gpio.h \
  ../../STM32CubeIDE/Platform/Inc/platform_tick.h
 ../../STM32CubeIDE/App/Measurement/Inc/measure_fsm.h:
+C:/Users/user/Documents/GitHub/Bucket/STM32CubeIDE/Drivers/Inc/ad7799.h:
 ../../Core/Inc/main.h:
 ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_adc.h:
 ../../Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f1xx.h:
@@ -52,6 +54,6 @@ App/Measurement/Src/measure_fsm.o: ../App/Measurement/Src/measure_fsm.c \
 ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_tim.h:
 ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_usart.h:
 ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_gpio.h:
-C:/Users/user/Documents/GitHub/Bucket/STM32CubeIDE/Drivers/Inc/ad7799.h:
 C:/Users/user/Documents/GitHub/Bucket/STM32CubeIDE/Drivers/Inc/adg888.h:
+../../STM32CubeIDE/Platform/Inc/bsp_gpio.h:
 ../../STM32CubeIDE/Platform/Inc/platform_tick.h:

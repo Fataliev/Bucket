@@ -7,7 +7,8 @@ Platform/Src/periph_spi.o: ../Platform/Src/periph_spi.c \
  ../../Drivers/CMSIS/Include/cmsis_version.h \
  ../../Drivers/CMSIS/Include/cmsis_compiler.h \
  ../../Drivers/CMSIS/Include/cmsis_gcc.h \
- ../../Drivers/CMSIS/Device/ST/STM32F1xx/Include/system_stm32f1xx.h
+ ../../Drivers/CMSIS/Device/ST/STM32F1xx/Include/system_stm32f1xx.h \
+ ../../STM32CubeIDE/Platform/Inc/platform_tick.h
 ../../STM32CubeIDE/Platform/Inc/periph_spi.h:
 ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_spi.h:
 ../../Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f1xx.h:
@@ -17,3 +18,4 @@ Platform/Src/periph_spi.o: ../Platform/Src/periph_spi.c \
 ../../Drivers/CMSIS/Include/cmsis_compiler.h:
 ../../Drivers/CMSIS/Include/cmsis_gcc.h:
 ../../Drivers/CMSIS/Device/ST/STM32F1xx/Include/system_stm32f1xx.h:
+../../STM32CubeIDE/Platform/Inc/platform_tick.h:

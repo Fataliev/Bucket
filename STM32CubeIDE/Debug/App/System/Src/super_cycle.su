@@ -1,0 +1,14 @@
+../App/System/Src/super_cycle.c:25:28:Heater_Task	4	static
+../App/System/Src/super_cycle.c:26:28:Status_Task	4	static
+../App/System/Src/super_cycle.c:27:28:Comms_Task	4	static
+../App/System/Src/super_cycle.c:28:28:Usb_Task	4	static
+../App/System/Src/super_cycle.c:29:28:Log_Task	4	static
+../App/System/Src/super_cycle.c:30:28:Measurement_OnResult	4	static
+../App/System/Src/super_cycle.c:55:13:Profile_Init	4	static
+../App/System/Src/super_cycle.c:63:6:SuperCycle_Init	8	static
+../App/System/Src/super_cycle.c:73:17:AvddToMv	48	static
+../App/System/Src/super_cycle.c:79:13:Debug_PrintMeasure	144	static
+../App/System/Src/super_cycle.c:98:6:SuperCycle_Run	32	static
+../App/System/Src/super_cycle.c:145:13:Task_Led	8	static
+../App/System/Src/super_cycle.c:161:10:SuperCycle_GetCycleCount	4	static
+../App/System/Src/super_cycle.c:163:10:SuperCycle_GetMaxLoopUs	4	static

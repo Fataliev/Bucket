@@ -104,7 +104,10 @@ void MX_TIM3_Init(void)
   LL_TIM_SetTriggerOutput(TIM3, LL_TIM_TRGO_RESET);
   LL_TIM_DisableMasterSlaveMode(TIM3);
   /* USER CODE BEGIN TIM3_Init 2 */
-
+  /* ТЗ п.2.15: TIM3 = 1 Гц. Системный тик 1 мс перенесён на SysTick. */
+  LL_TIM_SetPrescaler(TIM3, 7199U);    /* 72 МГц / 7200  = 10 кГц */
+  LL_TIM_SetAutoReload(TIM3, 9999U);   /* 10 кГц / 10000 = 1 Гц   */
+  LL_TIM_GenerateEvent_UPDATE(TIM3);   /* загрузить PSC/ARR; UIF сбросим перед стартом */
   /* USER CODE END TIM3_Init 2 */
 
 }
@@ -138,7 +141,11 @@ void MX_TIM4_Init(void)
   LL_TIM_SetTriggerOutput(TIM4, LL_TIM_TRGO_RESET);
   LL_TIM_DisableMasterSlaveMode(TIM4);
   /* USER CODE BEGIN TIM4_Init 2 */
-
+  /* PSC — теневой регистр:written значение загружается только по событию Update.
+     Без UG первый период отсчитывается со старым PSC=0:
+     60000 / 72 МГц = 0.83 мс вместо 6 с. Первый цикл стартует сразу и вразнобой. */
+  LL_TIM_GenerateEvent_UPDATE(TIM4);
+  LL_TIM_ClearFlag_UPDATE(TIM4);
   /* USER CODE END TIM4_Init 2 */
 
 }

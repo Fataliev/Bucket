@@ -1,5 +1,6 @@
 #include "usb_ft232.h"
 #include "usart.h"
+#include "platform_tick.h"
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -37,19 +38,22 @@ void USB_FT232_Init(void) {
 // Отправка данных через USB
 uint16_t USB_FT232_Transmit(const uint8_t *data, uint16_t len) {
     uint16_t sent = 0;
+    uint32_t t0;
+
+    if (data == NULL) { return 0U; }
 
     for (uint16_t i = 0; i < len; i++) {
-        // Ждем готовности передатчика
-        while (!LL_USART_IsActiveFlag_TXE(USART1));
-
-        // Отправляем байт
+        t0 = GetTick();
+        while (!LL_USART_IsActiveFlag_TXE(USART1)) {
+            if ((uint32_t)(GetTick() - t0) >= 10U) { return sent; }   /* шина мертва */
+        }
         LL_USART_TransmitData8(USART1, data[i]);
         sent++;
     }
-
-    // Ждем завершения передачи последнего байта
-    while (!LL_USART_IsActiveFlag_TC(USART1));
-
+    t0 = GetTick();
+    while (!LL_USART_IsActiveFlag_TC(USART1)) {
+        if ((uint32_t)(GetTick() - t0) >= 10U) { break; }
+    }
     return sent;
 }
 

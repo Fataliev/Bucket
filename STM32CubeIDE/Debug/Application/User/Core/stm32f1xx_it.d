@@ -27,7 +27,8 @@ Application/User/Core/stm32f1xx_it.o: \
  ../../Core/Inc/stm32f1xx_it.h \
  ../../STM32CubeIDE/Platform/Inc/platform_tick.h \
  ../../STM32CubeIDE/Platform/Inc/periph_spi.h \
- ../../STM32CubeIDE/Platform/Inc/usb_ft232.h
+ ../../STM32CubeIDE/Platform/Inc/usb_ft232.h \
+ ../../STM32CubeIDE/Platform/Inc/platform_isr.h
 ../../Core/Inc/main.h:
 ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_adc.h:
 ../../Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f1xx.h:
@@ -56,3 +57,4 @@ Application/User/Core/stm32f1xx_it.o: \
 ../../STM32CubeIDE/Platform/Inc/platform_tick.h:
 ../../STM32CubeIDE/Platform/Inc/periph_spi.h:
 ../../STM32CubeIDE/Platform/Inc/usb_ft232.h:
+../../STM32CubeIDE/Platform/Inc/platform_isr.h:

@@ -28,4 +28,10 @@ uint8_t USART_IsTxBusy(USART_TypeDef *USARTx);
 // Включение прерывания по IDLE (для приема команд SDI-12/RS-485)
 void USART_EnableIdleIT(USART_TypeDef *USARTx);
 
+void USART1_TX_DMA_IRQHandler(void);
+void USART2_TX_DMA_IRQHandler(void);
+void USART3_TX_DMA_IRQHandler(void);
+
+
+
 #endif // PERIPH_USART_H

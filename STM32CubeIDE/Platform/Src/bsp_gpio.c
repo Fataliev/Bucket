@@ -2,8 +2,8 @@
 
 // --- Управление светодиодами ---
 // ВАЖНО: Судя по схеме (V16), анод светодиода подключен через резистор R65=1.8kOm к PB15,
-// а катод 0V. Поэтому для выключения (ON)  нужно
-// подать НИЗКИЙ уровень (Reset), а для включения (OFF) - ВЫСОКИЙ (Set).
+// а катод 0V. Поэтому для выключения (OFF)  нужно подать НИЗКИЙ уровень (Reset)
+// а для включения (ON) - ВЫСОКИЙ (Set).
 
 void BSP_LED_V16_Set(uint8_t state) {
     if (state) {
@@ -22,9 +22,9 @@ void BSP_LED_V16_Toggle(void) {
 }
 
 void BSP_LED_V15_Set(uint8_t state) {
-    // На схеме V15 подключен к PB12. Логика аналогичная.
-    if (state) LL_GPIO_ResetOutputPin(USB_LED_GPIO_Port, USB_LED_Pin);
-    else       LL_GPIO_SetOutputPin(USB_LED_GPIO_Port, USB_LED_Pin);
+    /* PB12 -> R57 390 Ом -> анод V15, катод GND: высокий = горит если подключен USB */
+    if (state) LL_GPIO_SetOutputPin(USB_LED_GPIO_Port,   USB_LED_Pin);
+    else       LL_GPIO_ResetOutputPin(USB_LED_GPIO_Port, USB_LED_Pin);
 }
 
 // --- Управление CS (Активный уровень - низкий) ---
@@ -62,3 +62,16 @@ void BSP_SW_ADC_Set(uint8_t state) {
     if (state) LL_GPIO_SetOutputPin(SW_ADC_GPIO_Port, SW_ADC_Pin);
     else       LL_GPIO_ResetOutputPin(SW_ADC_GPIO_Port, SW_ADC_Pin);
 }
+
+/* Диагностика: активен ли CS (низкий уровень) */
+static inline uint8_t BSP_CS_ADC1_IsActive(void) {
+    return (LL_GPIO_IsInputPinSet(CS_ADC_1_GPIO_Port, CS_ADC_1_Pin) == 0U) ? 1U : 0U;
+}
+static inline uint8_t BSP_CS_ADC2_IsActive(void) {
+    return (LL_GPIO_IsInputPinSet(CS_ADC_2_GPIO_Port, CS_ADC_2_Pin) == 0U) ? 1U : 0U;
+}
+
+/* Объединённый DOUT/~RDY обоих АЦП на SPI1_MISO (PA6).
+   Читать только при опущенном CS конкретного АЦП.
+   PA6 настроен как Floating Input в MX_SPI1_Init — уровень читается корректно. */
+

@@ -25,6 +25,7 @@
 #include "platform_tick.h"
 #include "periph_spi.h"
 #include "usb_ft232.h"
+#include "platform_isr.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -186,6 +187,7 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
+	Platform_ISR_SysTick(); /* 1 мс: Platform_IncTick() + событие 100 мс */
   /* USER CODE END SysTick_IRQn 0 */
 
   /* USER CODE BEGIN SysTick_IRQn 1 */
@@ -226,7 +228,7 @@ void EXTI2_IRQHandler(void)
 void DMA1_Channel4_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel4_IRQn 0 */
-
+	Platform_ISR_DMA1_CH4();
   /* USER CODE END DMA1_Channel4_IRQn 0 */
 
   /* USER CODE BEGIN DMA1_Channel4_IRQn 1 */
@@ -254,7 +256,7 @@ void DMA1_Channel6_IRQHandler(void)
 void DMA1_Channel7_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel7_IRQn 0 */
-
+	Platform_ISR_DMA1_CH7();
   /* USER CODE END DMA1_Channel7_IRQn 0 */
 
   /* USER CODE BEGIN DMA1_Channel7_IRQn 1 */
@@ -282,10 +284,7 @@ void ADC1_2_IRQHandler(void)
 void TIM3_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM3_IRQn 0 */
-	if (LL_TIM_IsActiveFlag_UPDATE(TIM3)) {
-	      LL_TIM_ClearFlag_UPDATE(TIM3);
-	      Platform_IncTick(); // Инкрементируем тик каждую 1 мс
-	  }
+	Platform_ISR_TIM3(); /* 1 Гц: только флаг PLATFORM_EV_1HZ */
   /* USER CODE END TIM3_IRQn 0 */
   /* USER CODE BEGIN TIM3_IRQn 1 */
 
@@ -298,7 +297,7 @@ void TIM3_IRQHandler(void)
 void TIM4_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM4_IRQn 0 */
-
+	Platform_ISR_TIM4();
   /* USER CODE END TIM4_IRQn 0 */
   /* USER CODE BEGIN TIM4_IRQn 1 */
 
@@ -339,7 +338,7 @@ void I2C1_ER_IRQHandler(void)
 void SPI1_IRQHandler(void)
 {
   /* USER CODE BEGIN SPI1_IRQn 0 */
-	  SPI_IRQ_Handler(); // Перенаправляем прерывание в наш слой Platform
+	Platform_ISR_SPI1();
   /* USER CODE END SPI1_IRQn 0 */
   /* USER CODE BEGIN SPI1_IRQn 1 */
 
@@ -352,7 +351,7 @@ void SPI1_IRQHandler(void)
 void USART1_IRQHandler(void)
 {
   /* USER CODE BEGIN USART1_IRQn 0 */
-	USB_FT232_IRQHandler();  // Передаем обработку в драйвер USB
+	 Platform_ISR_USART1();
   /* USER CODE END USART1_IRQn 0 */
   /* USER CODE BEGIN USART1_IRQn 1 */
 
@@ -386,6 +385,11 @@ void USART3_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
-
+/* В CubeMX NVIC для DMA1 channel2 не включён, поэтому обработчика нет в
+   сгенерированной части. Если включите его в CubeMX — эту функцию удалить. */
+void DMA1_Channel2_IRQHandler(void)
+{
+    Platform_ISR_DMA1_CH2();
+}
 /* USER CODE END 1 */
 

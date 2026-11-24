@@ -26,10 +26,13 @@ stm32f1xx_ll_bus.h:447:22:LL_APB1_GRP1_EnableClock	1
 stm32f1xx_ll_bus.h:763:22:LL_APB2_GRP1_EnableClock	1
 stm32f1xx_ll_system.h:470:22:LL_FLASH_SetLatency	1
 stm32f1xx_ll_system.h:483:26:LL_FLASH_GetLatency	1
+stm32f1xx_ll_cortex.h:244:22:LL_SYSTICK_SetClkSource	2
+stm32f1xx_ll_cortex.h:273:22:LL_SYSTICK_EnableIT	1
 stm32f1xx_ll_pwr.h:165:22:LL_PWR_EnableBkUpAccess	1
 stm32f1xx_ll_tim.h:1063:22:LL_TIM_EnableCounter	1
+stm32f1xx_ll_tim.h:2992:22:LL_TIM_ClearFlag_UPDATE	1
 stm32f1xx_ll_tim.h:3267:22:LL_TIM_EnableIT_UPDATE	1
 stm32f1xx_ll_gpio.h:1565:22:LL_GPIO_AF_Remap_SWJ_NOJTAG	1
-main.c:101:5:main	12
-main.c:302:6:SystemClock_Config	9
-main.c:371:6:Error_Handler	1
+main.c:90:5:main	2
+main.c:223:6:SystemClock_Config	9
+main.c:292:6:Error_Handler	1

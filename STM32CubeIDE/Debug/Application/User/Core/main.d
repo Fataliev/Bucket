@@ -34,7 +34,9 @@ Application/User/Core/main.o: \
  C:/Users/user/Documents/GitHub/Bucket/STM32CubeIDE/Drivers/Inc/adg888.h \
  C:/Users/user/Documents/GitHub/Bucket/STM32CubeIDE/Drivers/Inc/ad7799.h \
  ../../STM32CubeIDE/App/Measurement/Inc/measure_fsm.h \
- ../../STM32CubeIDE/Platform/Inc/usb_ft232.h
+ ../../STM32CubeIDE/Platform/Inc/usb_ft232.h \
+ ../../STM32CubeIDE/App/System/Inc/super_cycle.h \
+ ../../STM32CubeIDE/Platform/Inc/platform_events.h
 ../../Core/Inc/main.h:
 ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_adc.h:
 ../../Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f1xx.h:
@@ -77,3 +79,5 @@ C:/Users/user/Documents/GitHub/Bucket/STM32CubeIDE/Drivers/Inc/adg888.h:
 C:/Users/user/Documents/GitHub/Bucket/STM32CubeIDE/Drivers/Inc/ad7799.h:
 ../../STM32CubeIDE/App/Measurement/Inc/measure_fsm.h:
 ../../STM32CubeIDE/Platform/Inc/usb_ft232.h:
+../../STM32CubeIDE/App/System/Inc/super_cycle.h:
+../../STM32CubeIDE/Platform/Inc/platform_events.h:

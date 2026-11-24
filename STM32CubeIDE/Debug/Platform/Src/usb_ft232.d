@@ -23,7 +23,8 @@ Platform/Src/usb_ft232.o: ../Platform/Src/usb_ft232.c \
  ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_tim.h \
  ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_usart.h \
  ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_gpio.h \
- ../../Core/Inc/usart.h ../../Core/Inc/main.h
+ ../../Core/Inc/usart.h ../../Core/Inc/main.h \
+ ../../STM32CubeIDE/Platform/Inc/platform_tick.h
 ../../STM32CubeIDE/Platform/Inc/usb_ft232.h:
 ../../Core/Inc/main.h:
 ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_adc.h:
@@ -51,3 +52,4 @@ Platform/Src/usb_ft232.o: ../Platform/Src/usb_ft232.c \
 ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_gpio.h:
 ../../Core/Inc/usart.h:
 ../../Core/Inc/main.h:
+../../STM32CubeIDE/Platform/Inc/platform_tick.h:

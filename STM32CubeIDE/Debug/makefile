@@ -15,6 +15,7 @@ RM := rm -rf
 -include Drivers/CMSIS/subdir.mk
 -include Application/User/Startup/subdir.mk
 -include Application/User/Core/subdir.mk
+-include App/System/Src/subdir.mk
 -include App/Measurement/Src/subdir.mk
 -include objects.mk
 
@@ -56,6 +57,9 @@ default.size.stdout \
 OBJDUMP_LIST += \
 Bucket.list \
 
+OBJCOPY_HEX += \
+Bucket.hex \
+
 
 # All Target
 all: main-build
@@ -79,12 +83,17 @@ Bucket.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
+Bucket.hex: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objcopy  -O ihex $(EXECUTABLES) "Bucket.hex"
+	@echo 'Finished building: $@'
+	@echo ' '
+
 # Other Targets
 clean:
-	-$(RM) Bucket.elf Bucket.list Bucket.map default.size.stdout
+	-$(RM) Bucket.elf Bucket.hex Bucket.list Bucket.map default.size.stdout
 	-@echo ' '
 
-secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
+secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST) $(OBJCOPY_HEX)
 
 fail-specified-linker-script-missing:
 	@echo 'Error: Cannot find the specified linker script. Check the linker settings in the build configuration.'

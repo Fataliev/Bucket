@@ -38,6 +38,9 @@
 #include "ad7799.h"
 #include "measure_fsm.h"
 #include "usb_ft232.h"
+#include "super_cycle.h"
+#include "platform_events.h"
+
 
 #include <stddef.h>
 #include <stdio.h>
@@ -64,15 +67,6 @@ volatile uint8_t g_adc1_id = 0xFF;
 volatile uint8_t g_adc2_id = 0xFF;
 volatile MeasureResult_t g_measure_result; // <-- Теперь тип известен компилятору
 volatile uint8_t g_measurement_complete = 0;
-static uint8_t g_current_adc = 0;
-static uint32_t last_usb_test = 0;
-static uint32_t  last_adc_test=0;
-
-/////////////////
-
-uint32_t raw;
-uint16_t mode, cfg;
-uint8_t  st;
 
 
 /* USER CODE END PV */
@@ -85,11 +79,6 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-#include "usb_ft232.h"
-
-
-volatile uint32_t g_adc1_data = 0;
-volatile uint32_t g_adc2_data = 0;
 
 
 /* USER CODE END 0 */
@@ -129,9 +118,8 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
-//Важно проследить что бы функция MX_DMA_Init вызывалась сразу после MX_GPIO_Init (CubeMX нарушает порядок при обновлении, что приводит к сбоям)
-
+  LL_SYSTICK_SetClkSource(LL_SYSTICK_CLKSOURCE_HCLK);
+  LL_SYSTICK_EnableIT();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -150,58 +138,64 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
+    /* --- Приоритеты прерываний (ТЗ 2.2.5, SysTick выше периферии!) --- */
+    NVIC_SetPriority(SysTick_IRQn,         NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0));
+    NVIC_SetPriority(USART3_IRQn,          NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 1, 0));
+    NVIC_SetPriority(SPI1_IRQn,            NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 2, 0));
+    NVIC_SetPriority(TIM4_IRQn,            NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 3, 0));
+    NVIC_SetPriority(TIM3_IRQn,            NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 3, 0));
+    NVIC_SetPriority(USART1_IRQn,          NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 4, 0));
+    NVIC_SetPriority(DMA1_Channel4_IRQn,   NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 5, 0));
+    NVIC_SetPriority(DMA1_Channel7_IRQn,   NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 5, 0));
+    NVIC_SetPriority(DMA1_Channel2_IRQn,   NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 5, 0));
 
+    /* --- Слой Platform --- */
+    Platform_TickInit();
+    Events_Init();
+    SPI_Platform_Init();
+    USART_Platform_Init();
+    USB_FT232_Init();
 
-  // Запускаем TIM3 для генерации прерываний каждую 1 мс
-  LL_TIM_EnableIT_UPDATE(TIM3);
-  LL_TIM_EnableCounter(TIM3);
+    USB_FT232_SendString("\r\n=== Bucket boot ===\r\n");
+    if (Platform_TickIsRunning() == 0U) {
+        for (;;) {
+            USB_FT232_SendString("FATAL: SysTick IRQ not running\r\n");
+            BSP_LED_V16_Toggle();
+            Platform_DelayUs(500000U);
+        }
+    }
+    USB_FT232_SendString("SysTick OK (1 ms)\r\n");
 
+    /* --- Безопасные состояния шины ДО первого обмена --- */
+    BSP_CS_ADC1_Set(1);
+    BSP_CS_ADC2_Set(1);
+    BSP_CS_FLASH_Set(1);
+    BSP_CS_PS09_Set(1);
+    ADG888_Init();
 
-   Platform_TickInit();
-   SPI_Platform_Init();
-   USART_Platform_Init();
+    /* --- Приложение: AD7799_Init вызывается ОДИН раз, внутри MeasureFSM_Init --- */
+    MeasureFSM_Init();
+    SuperCycle_Init();
 
-   // Инициализация USB
-   USB_FT232_Init();
-   last_usb_test = GetTick();
+    USB_FT232_Printf("D22 ID=0x%02X OFFSET=0x%06lX FS=0x%06lX\r\n",
+        AD7799_ReadID(AD7799_DEV_1),
+        (unsigned long)AD7799_ReadOffset(AD7799_DEV_1),
+        (unsigned long)AD7799_ReadFullScale(AD7799_DEV_1));
+    USB_FT232_Printf("D23 ID=0x%02X OFFSET=0x%06lX FS=0x%06lX\r\n",
+        AD7799_ReadID(AD7799_DEV_2),
+        (unsigned long)AD7799_ReadOffset(AD7799_DEV_2),
+        (unsigned long)AD7799_ReadFullScale(AD7799_DEV_2));
 
+    /* --- Запуск таймеров: UIF сбрасываем, иначе первое прерывание ложное --- */
+    LL_TIM_ClearFlag_UPDATE(TIM3);
+    LL_TIM_EnableIT_UPDATE(TIM3);
+    LL_TIM_EnableCounter(TIM3);
 
-   ADG888_Init();
-   //AD7799_Init();
-  MeasureFSM_Init();// Внутри уже вызывается AD7799_Init и определяется тип
+    LL_TIM_ClearFlag_UPDATE(TIM4);
+    LL_TIM_EnableIT_UPDATE(TIM4);
+    LL_TIM_EnableCounter(TIM4);
 
-  /* Все CS шины SPI1 в неактивное состояние ДО первого обмена */
-  BSP_CS_ADC1_Set(1);
-  BSP_CS_ADC2_Set(1);
-  BSP_CS_FLASH_Set(1);
-  BSP_CS_PS09_Set(1);
-
-
-
-  /* Стартовый дамп регистров: ID + калибровочные коэффициенты */
-    g_adc1_id = AD7799_ReadID(AD7799_DEV_1);
-    g_adc2_id = AD7799_ReadID(AD7799_DEV_2);
-    USB_FT232_Printf("D22 ID=0x%02X (%s)  OFFSET=0x%06lX FS=0x%06lX\r\n",
-                     g_adc1_id,
-                     ((g_adc1_id & 0x0F) == 0x09) ? "AD7799" :
-                     ((g_adc1_id & 0x0F) == 0x08) ? "AD7798!" : "NO CHIP",
-                     (unsigned long)AD7799_ReadOffset(AD7799_DEV_1),
-                     (unsigned long)AD7799_ReadFullScale(AD7799_DEV_1));
-    USB_FT232_Printf("D23 ID=0x%02X (%s)  OFFSET=0x%06lX FS=0x%06lX\r\n",
-                     g_adc2_id,
-                     ((g_adc2_id & 0x0F) == 0x09) ? "AD7799" :
-                     ((g_adc2_id & 0x0F) == 0x08) ? "AD7798!" : "NO CHIP",
-                     (unsigned long)AD7799_ReadOffset(AD7799_DEV_2),
-                     (unsigned long)AD7799_ReadFullScale(AD7799_DEV_2));
-    USB_FT232_SendString("ST: bit7=RDY(1=busy) bit6=ERR bit5=NOREF bit2..0=CH\r\n");
-    USB_FT232_SendString("FS=0x0F -> 4.17 Hz, tSETTLE=480 ms; cycle ~3.5 s\r\n");
-
-    last_adc_test = GetTick();
-    last_usb_test = GetTick();
-    BSP_LED_V16_Set(1);
-
-
-
+    USB_FT232_SendString("Super-cycle started (TIM4 = 6 s)\r\n");
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -212,80 +206,7 @@ int main(void)
        // 1. КОРМЛЕНИЕ СТОРОЖЕВОГО ТАЙМЕРА (Критически важно!)
        //LL_IWDG_ReloadCounter(IWDG);
 
-       if ((uint32_t)(GetTick() - last_adc_test) >= 1000)
-       {
-         last_adc_test = GetTick();
-         BSP_LED_V16_Toggle();
-
-         USB_FT232_Printf("\r\n--- t=%lu ms ---\r\n", (unsigned long)GetTick());
-
-         /* ---------------- D22: служебные регистры ---------------- */
-         g_adc1_id = AD7799_ReadID(AD7799_DEV_1);
-         st        = AD7799_ReadStatus(AD7799_DEV_1);
-         mode      = AD7799_ReadMode(AD7799_DEV_1);
-         cfg       = AD7799_ReadConfig(AD7799_DEV_1);
-         USB_FT232_Printf("D22 ID=%02X ST=%02X MODE=%04X CFG=%04X IO=%02X\r\n",
-                          g_adc1_id, st, mode, cfg, AD7799_ReadIO(AD7799_DEV_1));
-
-         /* D22 AIN1: тензомост, bipolar, G=128 */
-         g_adc1_data = AD7799_MeasureChannel(AD7799_DEV_1,
-                         AD7799_CONF_BIPOLAR | AD7799_CONF_BUF |
-                         AD7799_CONF_GAIN(7)   | AD7799_CONF_CH_AIN1);
-         st = AD7799_ReadStatus(AD7799_DEV_1);
-         USB_FT232_Printf("D22 AIN1 W  G128 B: %06lX %s ST=%02X\r\n",
-                          (unsigned long)g_adc1_data,
-                          (g_adc1_data == 0xFFFFFFFFUL) ? "RDY-TIMEOUT" : "ok", st);
-
-         /* D22 AIN2: RTD B6, unipolar, G=1 */
-         raw = AD7799_MeasureChannel(AD7799_DEV_1,
-                 AD7799_CONF_UNIPOLAR | AD7799_CONF_BUF |
-                 AD7799_CONF_GAIN(0)    | AD7799_CONF_CH_AIN2);
-         USB_FT232_Printf("D22 AIN2 B6 G1  U: %06lX %s\r\n",
-                          (unsigned long)raw,
-                          (raw == 0xFFFFFFFFUL) ? "RDY-TIMEOUT" : "ok");
-
-         /* D22 AIN3: RTD B8, unipolar, G=1 */
-         raw = AD7799_MeasureChannel(AD7799_DEV_1,
-                 AD7799_CONF_UNIPOLAR | AD7799_CONF_BUF |
-                 AD7799_CONF_GAIN(0)    | AD7799_CONF_CH_AIN3);
-         USB_FT232_Printf("D22 AIN3 B8 G1  U: %06lX %s\r\n",
-                          (unsigned long)raw,
-                          (raw == 0xFFFFFFFFUL) ? "RDY-TIMEOUT" : "ok");
-
-         /* D22 CH=7: это AVDD MONITOR (gain=1/6, внутр. ИОН 1.17 В), НЕ температура */
-         raw = AD7799_MeasureChannel(AD7799_DEV_1,
-                 AD7799_CONF_UNIPOLAR | AD7799_CONF_CH_INT_TEMP);
-         USB_FT232_Printf("D22 AVDDMON      : %06lX %s\r\n",
-                          (unsigned long)raw,
-                          (raw == 0xFFFFFFFFUL) ? "RDY-TIMEOUT" : "ok");
-
-         /* ---------------- D23: служебные регистры ---------------- */
-         g_adc2_id = AD7799_ReadID(AD7799_DEV_2);
-         st        = AD7799_ReadStatus(AD7799_DEV_2);
-         mode      = AD7799_ReadMode(AD7799_DEV_2);
-         cfg       = AD7799_ReadConfig(AD7799_DEV_2);
-         USB_FT232_Printf("D23 ID=%02X ST=%02X MODE=%04X CFG=%04X IO=%02X\r\n",
-                          g_adc2_id, st, mode, cfg, AD7799_ReadIO(AD7799_DEV_2));
-
-         /* D23 AIN1: тензомост (обратная полярность), bipolar, G=128 */
-         g_adc2_data = AD7799_MeasureChannel(AD7799_DEV_2,
-                         AD7799_CONF_BIPOLAR | AD7799_CONF_BUF |
-                         AD7799_CONF_GAIN(7)   | AD7799_CONF_CH_AIN1);
-         st = AD7799_ReadStatus(AD7799_DEV_2);
-         USB_FT232_Printf("D23 AIN1 W  G128 B: %06lX %s ST=%02X\r\n",
-                          (unsigned long)g_adc2_data,
-                          (g_adc2_data == 0xFFFFFFFFUL) ? "RDY-TIMEOUT" : "ok", st);
-
-         /* D23 AIN2: RTD B7, unipolar, G=1. AIN3 у D23 не подключён */
-         raw = AD7799_MeasureChannel(AD7799_DEV_2,
-                 AD7799_CONF_UNIPOLAR | AD7799_CONF_BUF |
-                 AD7799_CONF_GAIN(0)    | AD7799_CONF_CH_AIN2);
-         USB_FT232_Printf("D23 AIN2 B7 G1  U: %06lX %s\r\n",
-                          (unsigned long)raw,
-                          (raw == 0xFFFFFFFFUL) ? "RDY-TIMEOUT" : "ok");
-
-         USB_FT232_Printf("--- done, t=%lu ms ---\r\n", (unsigned long)GetTick());
-       }
+	   SuperCycle_Run();
 
     /* USER CODE END WHILE */
 

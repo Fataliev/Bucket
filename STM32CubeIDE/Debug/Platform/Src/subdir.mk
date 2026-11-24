@@ -9,6 +9,8 @@ C_SRCS += \
 ../Platform/Src/onewire_uart.c \
 ../Platform/Src/periph_spi.c \
 ../Platform/Src/periph_usart.c \
+../Platform/Src/platform_events.c \
+../Platform/Src/platform_isr.c \
 ../Platform/Src/platform_tick.c \
 ../Platform/Src/usb_ft232.c 
 
@@ -17,6 +19,8 @@ OBJS += \
 ./Platform/Src/onewire_uart.o \
 ./Platform/Src/periph_spi.o \
 ./Platform/Src/periph_usart.o \
+./Platform/Src/platform_events.o \
+./Platform/Src/platform_isr.o \
 ./Platform/Src/platform_tick.o \
 ./Platform/Src/usb_ft232.o 
 
@@ -25,6 +29,8 @@ C_DEPS += \
 ./Platform/Src/onewire_uart.d \
 ./Platform/Src/periph_spi.d \
 ./Platform/Src/periph_usart.d \
+./Platform/Src/platform_events.d \
+./Platform/Src/platform_isr.d \
 ./Platform/Src/platform_tick.d \
 ./Platform/Src/usb_ft232.d 
 
@@ -36,7 +42,7 @@ Platform/Src/%.o Platform/Src/%.su Platform/Src/%.cyclo: ../Platform/Src/%.c Pla
 clean: clean-Platform-2f-Src
 
 clean-Platform-2f-Src:
-	-$(RM) ./Platform/Src/bsp_gpio.cyclo ./Platform/Src/bsp_gpio.d ./Platform/Src/bsp_gpio.o ./Platform/Src/bsp_gpio.su ./Platform/Src/onewire_uart.cyclo ./Platform/Src/onewire_uart.d ./Platform/Src/onewire_uart.o ./Platform/Src/onewire_uart.su ./Platform/Src/periph_spi.cyclo ./Platform/Src/periph_spi.d ./Platform/Src/periph_spi.o ./Platform/Src/periph_spi.su ./Platform/Src/periph_usart.cyclo ./Platform/Src/periph_usart.d ./Platform/Src/periph_usart.o ./Platform/Src/periph_usart.su ./Platform/Src/platform_tick.cyclo ./Platform/Src/platform_tick.d ./Platform/Src/platform_tick.o ./Platform/Src/platform_tick.su ./Platform/Src/usb_ft232.cyclo ./Platform/Src/usb_ft232.d ./Platform/Src/usb_ft232.o ./Platform/Src/usb_ft232.su
+	-$(RM) ./Platform/Src/bsp_gpio.cyclo ./Platform/Src/bsp_gpio.d ./Platform/Src/bsp_gpio.o ./Platform/Src/bsp_gpio.su ./Platform/Src/onewire_uart.cyclo ./Platform/Src/onewire_uart.d ./Platform/Src/onewire_uart.o ./Platform/Src/onewire_uart.su ./Platform/Src/periph_spi.cyclo ./Platform/Src/periph_spi.d ./Platform/Src/periph_spi.o ./Platform/Src/periph_spi.su ./Platform/Src/periph_usart.cyclo ./Platform/Src/periph_usart.d ./Platform/Src/periph_usart.o ./Platform/Src/periph_usart.su ./Platform/Src/platform_events.cyclo ./Platform/Src/platform_events.d ./Platform/Src/platform_events.o ./Platform/Src/platform_events.su ./Platform/Src/platform_isr.cyclo ./Platform/Src/platform_isr.d ./Platform/Src/platform_isr.o ./Platform/Src/platform_isr.su ./Platform/Src/platform_tick.cyclo ./Platform/Src/platform_tick.d ./Platform/Src/platform_tick.o ./Platform/Src/platform_tick.su ./Platform/Src/usb_ft232.cyclo ./Platform/Src/usb_ft232.d ./Platform/Src/usb_ft232.o ./Platform/Src/usb_ft232.su
 
 .PHONY: clean-Platform-2f-Src
 

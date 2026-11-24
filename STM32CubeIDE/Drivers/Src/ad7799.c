@@ -4,6 +4,12 @@
 #include "platform_tick.h"
 #include <stddef.h>
 
+
+
+
+
+static volatile uint16_t s_not_ready_cnt[2] = {0U, 0U};
+
 static void AD7799_SelectCS(AD7799_Device_t dev, uint8_t state) {
     if (dev == AD7799_DEV_1) {
         BSP_CS_ADC1_Set(state);
@@ -13,12 +19,11 @@ static void AD7799_SelectCS(AD7799_Device_t dev, uint8_t state) {
 }
 
 void AD7799_Reset(AD7799_Device_t dev) {
-    uint8_t reset_seq[4] = {0xFF, 0xFF, 0xFF, 0xFF};
-    AD7799_SelectCS(dev, 0);
-    SPI_TransmitReceive_Blocking(reset_seq, NULL, 4);
-    AD7799_SelectCS(dev, 1);
-    uint32_t t0 = GetTick();
-    while ((uint32_t)(GetTick() - t0) < 1);
+uint8_t reset_seq[4] = {0xFF, 0xFF, 0xFF, 0xFF};
+AD7799_SelectCS(dev, 0);
+SPI_TransmitReceive_Blocking(reset_seq, NULL, 4);
+AD7799_SelectCS(dev, 1);
+Platform_DelayUs(500U);   /* ТЗ 2.2.7: 500 мкс, не зависит от SysTick */
 }
 
 void AD7799_SetIdleMode(AD7799_Device_t dev) {
@@ -34,12 +39,11 @@ void AD7799_SetIdleMode(AD7799_Device_t dev) {
 }
 
 void AD7799_Init(void) {
-    AD7799_Reset(AD7799_DEV_1);
-    AD7799_Reset(AD7799_DEV_2);
-    AD7799_WriteMode(AD7799_DEV_1, AD7799_MODE_IDLE_OFF);
-    AD7799_WriteMode(AD7799_DEV_2, AD7799_MODE_IDLE_OFF);
-    uint32_t t0 = GetTick();
-    while ((uint32_t)(GetTick() - t0) < 100);
+AD7799_Reset(AD7799_DEV_1);
+AD7799_Reset(AD7799_DEV_2);
+AD7799_WriteMode(AD7799_DEV_1, AD7799_MODE_IDLE_OFF);
+AD7799_WriteMode(AD7799_DEV_2, AD7799_MODE_IDLE_OFF);
+Platform_DelayUs(10000U);  /* 10 мс с запасом; блокировка до старта тика исключена */
 }
 
 uint8_t AD7799_ReadStatus(AD7799_Device_t dev) {
@@ -72,11 +76,13 @@ uint16_t AD7799_ReadMode(AD7799_Device_t dev) {
 }
 
 uint16_t AD7799_ReadConfig(AD7799_Device_t dev) {
-    uint8_t tx[3] = {AD7799_CMD_RD_CONFIG,0,0}, rx[3];
-    AD7799_SelectCS(dev, 0);
-    SPI_TransmitReceive_Blocking(tx, rx, 3);
-    AD7799_SelectCS(dev, 1);
-    return ((uint16_t)rx[1]<<8) | rx[2];
+uint8_t tx[3] = {AD7799_CMD_RD_CONFIG, 0, 0};
+uint8_t rx[3];
+AD7799_SelectCS(dev, 0);
+SPI_TransmitReceive_Blocking(tx, rx, 3);
+AD7799_SelectCS(dev, 1);
+/* ОТЛАДКА УДАЛЕНА: блокирующий printf внутри драйвера ломает тайминги */
+return ((uint16_t)rx[1] << 8) | rx[2];
 }
 
 uint8_t AD7799_ReadIO(AD7799_Device_t dev) {
@@ -138,16 +144,94 @@ uint8_t AD7799_WaitRDY(AD7799_Device_t dev, uint32_t timeout_ms) {
     return 1;
 }
 
+
+
+
+
+
 uint32_t AD7799_MeasureChannel(AD7799_Device_t dev, uint16_t config) {
-    AD7799_WriteMode(dev, AD7799_MODE_IDLE_ON);
-    AD7799_WriteConfig(dev, config);
-    uint32_t t0 = GetTick();
-    while ((uint32_t)(GetTick() - t0) < 50);
-    AD7799_WriteMode(dev, AD7799_MODE_START);
-    uint32_t data = 0xFFFFFFFF;
-    if (AD7799_WaitRDY(dev, 700)) {
-        data = AD7799_ReadData(dev);
-    }
-    AD7799_WriteMode(dev, AD7799_MODE_IDLE_OFF);
-    return data;
+	 AD7799_WriteMode(dev, AD7799_MODE_IDLE_ON);
+	    AD7799_WriteConfig(dev, config);
+
+
+	    uint32_t t0 = GetTick();
+	    while ((uint32_t)(GetTick() - t0) < 50);
+
+	    AD7799_WriteMode(dev, AD7799_MODE_START);
+	    uint32_t data = 0xFFFFFFFF;
+	    if (AD7799_WaitRDY(dev, 700)) {
+	        data = AD7799_ReadData(dev);
+	    }
+	    AD7799_WriteMode(dev, AD7799_MODE_IDLE_OFF);
+	    return data;
 }
+
+
+/* ======================= Неблокирующий интерфейс ======================= */
+
+
+
+
+/* ======================= Неблокирующий интерфейс ======================= */
+
+/* Пауза после падения CS: выход DOUT/~RDY из Z-состояния и перезаряд
+   линии через R64 4.7k. ~2 мкс при 72 МГц. */
+static void AD7799_CsSettleDelay(void)
+{
+    uint32_t i;
+    for (i = 0U; i < 150U; i++) {
+        __NOP();
+    }
+}
+
+void AD7799_StartConversion(AD7799_Device_t dev, uint16_t config, uint8_t psw_on)
+{
+    uint16_t mode = AD7799_MODE_SINGLE | AD7799_FS_417HZ;
+
+    if (psw_on != 0U) {
+        mode |= AD7799_MODE_PSW_ON;
+    }
+    AD7799_WriteConfig(dev, config);
+    AD7799_WriteMode(dev, mode);
+}
+
+uint8_t AD7799_IsReady(AD7799_Device_t dev)
+{
+	   // Пин PA6 при CS=1 работает как ~RDY (открытый сток).
+	    // Низкий уровень = данные готовы.
+	    return LL_GPIO_IsInputPinSet(GPIOA, LL_GPIO_PIN_6) ? 0 : 1;
+}
+
+uint8_t AD7799_ReadResult(AD7799_Device_t dev, uint32_t *code, uint8_t *status)
+{
+    uint32_t raw = AD7799_ReadData(dev);
+    uint8_t  st  = AD7799_ReadStatus(dev);
+
+    if (code   != NULL) { *code   = raw; }
+    if (status != NULL) { *status = st;  }
+
+    return ((st & (AD7799_ST_ERR | AD7799_ST_NOREF)) == 0U) ? 1U : 0U;
+}
+
+void AD7799_SetPSW(AD7799_Device_t dev, uint8_t on)
+{
+    uint16_t mode = AD7799_MODE_IDLE | AD7799_FS_417HZ;
+
+    if (on != 0U) {
+        mode |= AD7799_MODE_PSW_ON;
+    }
+    AD7799_WriteMode(dev, mode);
+}
+
+uint16_t AD7799_GetNotReadyCount(AD7799_Device_t dev)
+{
+    return s_not_ready_cnt[(dev == AD7799_DEV_2) ? 1U : 0U];
+}
+
+void AD7799_ClearNotReadyCount(AD7799_Device_t dev)
+{
+    s_not_ready_cnt[(dev == AD7799_DEV_2) ? 1U : 0U] = 0U;
+}
+
+
+

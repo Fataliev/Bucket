@@ -18,6 +18,7 @@
 #define AD7799_CMD_RD_IO        0x68
 #define AD7799_CMD_WR_FS        0x38
 #define AD7799_CMD_RD_FS        0x78
+#define AD7799_CONF_REF_DET     0x0020
 
 // ID значений
 #define AD7799_ID_AD7799        0x09
@@ -31,7 +32,7 @@
 #define AD7799_MODE_CAL_ZERO    0x8000
 #define AD7799_MODE_CAL_FULL    0xA000
 #define AD7799_MODE_PSW_ON      0x1000
-#define AD7799_FS_417HZ         0x000F
+#define AD7799_FS_417HZ         0x0000
 #define AD7799_MODE_IDLE_OFF    (AD7799_MODE_IDLE | AD7799_FS_417HZ)
 #define AD7799_MODE_IDLE_ON     (AD7799_MODE_IDLE | AD7799_MODE_PSW_ON | AD7799_FS_417HZ)
 #define AD7799_MODE_START       (AD7799_MODE_SINGLE | AD7799_MODE_PSW_ON | AD7799_FS_417HZ)
@@ -92,5 +93,41 @@ uint32_t AD7799_MeasureChannel(AD7799_Device_t dev, uint16_t config);
 
 // Ожидание RDY LOW
 uint8_t AD7799_WaitRDY(AD7799_Device_t dev, uint32_t timeout_ms);
+
+
+
+/* --- Биты регистра статуса (Table 11) --- */
+#define AD7799_ST_RDY        0x80U   /* 1 = преобразование не завершено */
+#define AD7799_ST_ERR        0x40U   /* 1 = ошибка преобразования (пере/недо-диапазон) */
+#define AD7799_ST_NOREF      0x20U   /* 1 = отсутствует опорное напряжение (при REF_DET) */
+#define AD7799_ST_CH_MASK    0x07U   /* номер канала последнего преобразования */
+
+/* Канал 7 у AD7799 — это AVDD MONITOR (AVDD/6, внутренний ИОН 1.17 В),
+   а НЕ датчик температуры. Подтверждено измерением: 0xB3C00C -> 4.93 В = 5VA.
+   Имена *_INT_TEMP оставлены только для совместимости, использовать нельзя. */
+#define AD7799_CONF_CH_AVDD_MON   0x0007
+
+/* ================= Неблокирующий интерфейс (для measure_fsm) ================= */
+
+/* Запуск одиночного преобразования. Возвращает сразу, ничего не ждёт.
+   psw_on = 1 — оставить питание моста включённым (штатный режим цикла). */
+void    AD7799_StartConversion(AD7799_Device_t dev, uint16_t config, uint8_t psw_on);
+
+/* Однократный опрос DOUT/~RDY при опущенном CS. Возвращает 1 если готово.
+   ВАЖНО: CS опускается и поднимается внутри функции — при поднятом CS
+   вывод DOUT/RDY находится в Z и линия подтянута к 3.3 В (R64),
+   поэтому опрос возможен только короткими импульсами, как здесь. */
+uint8_t AD7799_IsReady(AD7799_Device_t dev);
+
+/* Диагностика: сколько раз подряд IsReady вернул 0 для данного устройства */
+uint16_t AD7799_GetNotReadyCount(AD7799_Device_t dev);
+void     AD7799_ClearNotReadyCount(AD7799_Device_t dev);
+
+/* Чтение 24-битного кода и регистра статуса. Вызывать только после IsReady()==1.
+   Возвращает 1, если флаги ERR и NOREF не установлены. */
+uint8_t AD7799_ReadResult(AD7799_Device_t dev, uint32_t *code, uint8_t *status);
+
+/* Управление выводом PSW (бит 12 Mode-регистра) без старта преобразования. */
+void    AD7799_SetPSW(AD7799_Device_t dev, uint8_t on);
 
 #endif // AD7799_H

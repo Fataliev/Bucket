@@ -5,12 +5,16 @@
 ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_bus.h:447:22:LL_APB1_GRP1_EnableClock	24	static
 ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_bus.h:763:22:LL_APB2_GRP1_EnableClock	24	static
 ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_tim.h:1254:22:LL_TIM_DisableARRPreload	16	static
+../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_tim.h:1354:22:LL_TIM_SetPrescaler	16	static
+../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_tim.h:1379:22:LL_TIM_SetAutoReload	16	static
 ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_tim.h:1853:22:LL_TIM_OC_DisableFast	24	static
 ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_tim.h:1897:22:LL_TIM_OC_EnablePreload	24	static
 ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_tim.h:2581:22:LL_TIM_SetClockSource	16	static
 ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_tim.h:2627:22:LL_TIM_SetTriggerOutput	16	static
 ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_tim.h:2693:22:LL_TIM_DisableMasterSlaveMode	16	static
+../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_tim.h:2992:22:LL_TIM_ClearFlag_UPDATE	16	static
+../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_tim.h:3776:22:LL_TIM_GenerateEvent_UPDATE	16	static
 ../../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_gpio.h:1102:22:LL_GPIO_AF_RemapPartial1_TIM2	4	static
 C:/Users/user/Documents/GitHub/Bucket/Core/Src/tim.c:28:6:MX_TIM2_Init	80	static
 C:/Users/user/Documents/GitHub/Bucket/Core/Src/tim.c:78:6:MX_TIM3_Init	32	static
-C:/Users/user/Documents/GitHub/Bucket/Core/Src/tim.c:112:6:MX_TIM4_Init	32	static
+C:/Users/user/Documents/GitHub/Bucket/Core/Src/tim.c:115:6:MX_TIM4_Init	32	static

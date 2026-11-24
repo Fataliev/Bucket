@@ -1,0 +1,6 @@
+../Platform/Src/platform_events.c:8:6:Events_Init	16	static
+../Platform/Src/platform_events.c:18:6:Events_Set	16	static
+../Platform/Src/platform_events.c:26:9:Events_Consume	32	static,ignoring_inline_asm
+../Platform/Src/platform_events.c:40:9:Events_IsPending	16	static
+../Platform/Src/platform_events.c:44:6:Events_MarkCycleStart	8	static
+../Platform/Src/platform_events.c:48:10:Events_GetCycleStartTick	4	static
