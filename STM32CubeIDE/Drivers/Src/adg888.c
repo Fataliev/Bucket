@@ -12,10 +12,10 @@ void ADG888_Init(void) {
 void ADG888_SetPolarity(ADG888_Polarity_t polarity) {
     if (polarity == ADG888_POLARITY_FORWARD) {
         // LOW: D22 подключен к тензодатчику, D23 к AGND
-        LL_GPIO_ResetOutputPin(SW_ADC_GPIO_Port, SW_ADC_Pin);
+        LL_GPIO_ResetOutputPin(SW_ADC_GPIO_Port, SW_ADC_Pin);/* PB5 = 0 */
     } else {
         // HIGH: D23 подключен к тензодатчику, D22 к AGND
-        LL_GPIO_SetOutputPin(SW_ADC_GPIO_Port, SW_ADC_Pin);
+        LL_GPIO_SetOutputPin(SW_ADC_GPIO_Port, SW_ADC_Pin);  /* PB5 = 1 */
     }
     current_polarity = polarity;
 }

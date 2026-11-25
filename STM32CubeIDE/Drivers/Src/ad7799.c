@@ -197,9 +197,15 @@ void AD7799_StartConversion(AD7799_Device_t dev, uint16_t config, uint8_t psw_on
 
 uint8_t AD7799_IsReady(AD7799_Device_t dev)
 {
-	   // Пин PA6 при CS=1 работает как ~RDY (открытый сток).
-	    // Низкий уровень = данные готовы.
-	    return LL_GPIO_IsInputPinSet(GPIOA, LL_GPIO_PIN_6) ? 0 : 1;
+    /* КРИТИЧНО: Опускаем CS, чтобы АЦП мог физически управлять линией DOUT/~RDY.
+       Без этого линия подтянута к 3.3V через R64 и всегда читается как HIGH (не готов). */
+    AD7799_SelectCS(dev, 0);
+    AD7799_CsSettleDelay(); /* Пауза ~2 мкс для выхода из Z-состояния (уже есть в файле) */
+
+    uint8_t ready = LL_GPIO_IsInputPinSet(GPIOA, LL_GPIO_PIN_6) ? 0 : 1;
+
+    AD7799_SelectCS(dev, 1); /* Сразу возвращаем CS, чтобы не мешать шине */
+    return ready;
 }
 
 uint8_t AD7799_ReadResult(AD7799_Device_t dev, uint32_t *code, uint8_t *status)
@@ -215,12 +221,14 @@ uint8_t AD7799_ReadResult(AD7799_Device_t dev, uint32_t *code, uint8_t *status)
 
 void AD7799_SetPSW(AD7799_Device_t dev, uint8_t on)
 {
-    uint16_t mode = AD7799_MODE_IDLE | AD7799_FS_417HZ;
-
-    if (on != 0U) {
-        mode |= AD7799_MODE_PSW_ON;
+    if (on == 0U) {
+        /* Гарантированное выключение PSW через перевод в режим IDLE.
+           Согласно даташиту (Table 12), в режиме IDLE вывод PSW аппаратно отключается. */
+        AD7799_SetIdleMode(dev);
     }
-    AD7799_WriteMode(dev, mode);
+    /* Если on == 1U, мы НЕ пишем режим IDLE с битом PSW, так как он игнорируется.
+       Включение PSW должно происходить ТОЛЬКО через AD7799_StartConversion (запись 0x300A),
+       которая вызывается автоматически на нужном шаге FSM. */
 }
 
 uint16_t AD7799_GetNotReadyCount(AD7799_Device_t dev)

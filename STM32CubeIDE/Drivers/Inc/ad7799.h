@@ -27,8 +27,8 @@
 // Mode Register (16 бит)
 #define AD7799_MODE_CONT        0x0000
 #define AD7799_MODE_SINGLE      0x2000
-#define AD7799_MODE_IDLE        0x4000
-#define AD7799_MODE_PDOWN       0x6000
+#define AD7799_MODE_IDLE        0x6000
+#define AD7799_MODE_PDOWN       0x4000
 #define AD7799_MODE_CAL_ZERO    0x8000
 #define AD7799_MODE_CAL_FULL    0xA000
 #define AD7799_MODE_PSW_ON      0x1000

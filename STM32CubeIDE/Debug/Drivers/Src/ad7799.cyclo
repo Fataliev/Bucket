@@ -19,7 +19,7 @@ ad7799.c:152:10:AD7799_MeasureChannel	3
 ad7799.c:179:13:AD7799_CsSettleDelay	2
 ad7799.c:187:6:AD7799_StartConversion	2
 ad7799.c:198:9:AD7799_IsReady	1
-ad7799.c:205:9:AD7799_ReadResult	4
-ad7799.c:216:6:AD7799_SetPSW	2
-ad7799.c:226:10:AD7799_GetNotReadyCount	2
-ad7799.c:231:6:AD7799_ClearNotReadyCount	2
+ad7799.c:211:9:AD7799_ReadResult	4
+ad7799.c:222:6:AD7799_SetPSW	2
+ad7799.c:234:10:AD7799_GetNotReadyCount	2
+ad7799.c:239:6:AD7799_ClearNotReadyCount	2

@@ -18,8 +18,8 @@
 ../Drivers/Src/ad7799.c:152:10:AD7799_MeasureChannel	24	static
 ../Drivers/Src/ad7799.c:179:13:AD7799_CsSettleDelay	16	static,ignoring_inline_asm
 ../Drivers/Src/ad7799.c:187:6:AD7799_StartConversion	24	static
-../Drivers/Src/ad7799.c:198:9:AD7799_IsReady	16	static
-../Drivers/Src/ad7799.c:205:9:AD7799_ReadResult	32	static
-../Drivers/Src/ad7799.c:216:6:AD7799_SetPSW	24	static
-../Drivers/Src/ad7799.c:226:10:AD7799_GetNotReadyCount	16	static
-../Drivers/Src/ad7799.c:231:6:AD7799_ClearNotReadyCount	16	static
+../Drivers/Src/ad7799.c:198:9:AD7799_IsReady	24	static
+../Drivers/Src/ad7799.c:211:9:AD7799_ReadResult	32	static
+../Drivers/Src/ad7799.c:222:6:AD7799_SetPSW	16	static
+../Drivers/Src/ad7799.c:234:10:AD7799_GetNotReadyCount	16	static
+../Drivers/Src/ad7799.c:239:6:AD7799_ClearNotReadyCount	16	static

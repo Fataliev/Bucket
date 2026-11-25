@@ -14,7 +14,7 @@
 
 /* REF_DET для ратиометрических каналов. 0 — если потребуется вернуть
    конфигурацию точно к отлаженному baseline. */
-#define MEAS_USE_REF_DET      1U
+#define MEAS_USE_REF_DET      0U
 
 #if (MEAS_USE_REF_DET != 0)
 #define MEAS_REFDET           AD7799_CONF_REF_DET
@@ -37,13 +37,13 @@ typedef struct {
    Шаг 0 намеренно не зависит от моста: пока идёт его преобразование,
    питание тензомоста от LT3092 успевает установиться. */
 static const MeasStepDesc_t s_steps[MEAS_STEP_COUNT] = {
-    { AD7799_DEV_1, (uint16_t)(AD7799_CONF_UNIPOLAR | AD7799_CONF_CH_AVDD_MON),                                  0U },
+    { AD7799_DEV_1, (uint16_t)(AD7799_CONF_UNIPOLAR | AD7799_CONF_BUF | AD7799_CONF_CH_AVDD_MON),                0U }, /* ДОБАВЛЕН BUF */
     { AD7799_DEV_1, (uint16_t)(AD7799_CONF_UNIPOLAR | AD7799_CONF_BUF | AD7799_CONF_GAIN(0) | AD7799_CONF_CH_AIN3 | MEAS_REFDET),  480U },
     { AD7799_DEV_1, (uint16_t)(AD7799_CONF_UNIPOLAR | AD7799_CONF_BUF | AD7799_CONF_GAIN(0) | AD7799_CONF_CH_AIN2 | MEAS_REFDET),  960U },
     { AD7799_DEV_1, (uint16_t)(AD7799_CONF_BIPOLAR  | AD7799_CONF_BUF | AD7799_CONF_GAIN(7) | AD7799_CONF_CH_AIN1 | MEAS_REFDET), 1440U },
     { AD7799_DEV_2, (uint16_t)(AD7799_CONF_BIPOLAR  | AD7799_CONF_BUF | AD7799_CONF_GAIN(7) | AD7799_CONF_CH_AIN1 | MEAS_REFDET), 1920U },
     { AD7799_DEV_2, (uint16_t)(AD7799_CONF_UNIPOLAR | AD7799_CONF_BUF | AD7799_CONF_GAIN(0) | AD7799_CONF_CH_AIN2 | MEAS_REFDET), 2400U },
-    { AD7799_DEV_2, (uint16_t)(AD7799_CONF_UNIPOLAR | AD7799_CONF_CH_AVDD_MON),                                 2880U }
+    { AD7799_DEV_2, (uint16_t)(AD7799_CONF_UNIPOLAR | AD7799_CONF_BUF | AD7799_CONF_CH_AVDD_MON),               2880U }  /* ДОБАВЛЕН BUF */
 };
 
 static MeasureResult_t s_work;        /* заполняется в текущем цикле   */
@@ -143,11 +143,9 @@ void MeasureFSM_Start(uint32_t cycle_start_tick)
 
     ADG888_SetPolarity(ADG888_POLARITY_FORWARD);
 
-    /* PSW обоих АЦП включаем сразу и держим все 3360 мс.
-       Неактивный АЦП отключён ключом D20, поэтому лишнего тока нет;
-       зато в момент 1920 мс питание моста не прерывается ни на микросекунду. */
-    AD7799_SetPSW(AD7799_DEV_1, 1U);
-    AD7799_SetPSW(AD7799_DEV_2, 1U);
+    /* ✅ PSW будет включен автоматически при первом вызове AD7799_StartConversion
+       в шаге 0 (через бит 12 регистра Mode).
+       До этого момента PSW выключен (IDLE mode после Init). */
 
     s_active = 1U;
 }
@@ -170,7 +168,20 @@ void MeasureFSM_Task(void)
     if ((s_switched == 0U) && (phase >= MEAS_SWITCH_MS)) {
         primask = __get_PRIMASK();
         __disable_irq();
+
+        /* 1. Выключаем PSW_1 (переводит D22 в IDLE, PSW аппаратно отключается) */
+        AD7799_SetPSW(AD7799_DEV_1, 0U);
+
+        /* 2. Пауза 10 мс для эксклюзивности питания (используем проверенную Platform_DelayUs) */
+        Platform_DelayUs(10000U);
+
+        /* 3. Переключаем ключи ADG888 */
         ADG888_SetPolarity(ADG888_POLARITY_REVERSE);
+
+        /* 4. Включаем PSW_2 и старт конверсии для D23 произойдет автоматически
+              на следующем тике FSM, когда s_step достигнет 4 (1920 мс) и вызовется
+              AD7799_StartConversion(..., 1U), который корректно запишет 0x300A (PSW_ON + Single) */
+
         __set_PRIMASK(primask);
         s_switched = 1U;
     }
@@ -205,12 +216,14 @@ void MeasureFSM_Task(void)
         }
 
         // 2. Проверяем пин ~RDY. Если он высокий — АЦП еще думает.
-        if (AD7799_IsReady(step->dev) == 0U) {
-            // Ждем до 600 мс (запас 120 мс на всякий случай)
+        /* Читаем регистр статуса через SPI. Бит 7 (RDY) = 1 означает "не готов". */
+        uint8_t st = AD7799_ReadStatus(step->dev);
+        if ((st & AD7799_ST_RDY) != 0U) {
+            // АЦП ещё не готов — ждём до 600 мс
             if ((uint32_t)(now - s_step_start) < 600) {
                 return;
             }
-            // Если и за 600 мс не дождались — фиксируем таймаут
+            // Таймаут — фиксируем ошибку
         }
 
         // 3. Читаем данные
